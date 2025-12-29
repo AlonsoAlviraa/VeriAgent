@@ -58,6 +58,30 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
 
+from core_engine.services.ocr import OCRService
+
+@app.post("/extract/{file_id}")
+async def extract_content(file_id: str):
+    """
+    [CORE-005] Extracts text from an uploaded file using OCR Service.
+    """
+    # Find file
+    found_file = None
+    for filename in os.listdir(UPLOAD_DIR):
+        if filename.startswith(file_id):
+            found_file = os.path.join(UPLOAD_DIR, filename)
+            break
+            
+    if not found_file:
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    text_content = OCRService.extract_text(found_file)
+    
+    return {
+        "file_id": file_id,
+        "text_content": text_content
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
