@@ -48,8 +48,8 @@ class TestStressLimits:
         [STRESS-002] Upload de archivos pesados con timeout extendido.
         Usa TestClient con timeout=30.0 para evitar caidas por latencia de E/S.
         """
-        # Generar contenido de archivo basura (1MB = 1024 * 1024 bytes)
-        file_content = os.urandom(file_size_mb * 1024 * 1024)
+        # Generar contenido de archivo basura que empiece con Magic Bytes PDF
+        file_content = b"%PDF" + os.urandom((file_size_mb * 1024 * 1024) - 4)
         
         # Configuramos el cliente
         with TestClient(app) as client:

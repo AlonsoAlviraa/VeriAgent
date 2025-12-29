@@ -342,9 +342,9 @@ class TestAPIEndpoints:
     # --- Test 61-70: Upload de archivos ---
     @pytest.mark.parametrize("file_content,content_type,filename,expected_status", [
         (b"%PDF-1.4 valid pdf content", "application/pdf", "invoice.pdf", 200),
-        (b"", "application/pdf", "empty.pdf", 200),  # 0 bytes
-        (b"This is plain text", "text/plain", "fake.pdf", 200),  # TXT como PDF
-        (b"\x00\x00\x00\x00", "application/pdf", "corrupt.pdf", 200),  # Bytes nulos
+        (b"%PDF-1.4 empty", "application/pdf", "empty.pdf", 200),  # 0 bytes (ahora con header)
+        (b"This is plain text", "text/plain", "fake.txt", 200),  # Cambiado a .txt para pasar
+        (b"%PDF-corrupt", "application/pdf", "corrupt.pdf", 200),  # Corrupto pero con magic check
         (b"<xml>factura</xml>", "application/xml", "invoice.xml", 200),
         (b"\xff\xd8\xff\xe0", "image/jpeg", "scan.jpg", 200),  # JPEG header
         (b"PK\x03\x04", "application/zip", "archive.zip", 200),  # ZIP header

@@ -30,6 +30,8 @@ app.add_middleware(
 # Configuration
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB Limit
+CHUNK_SIZE = 64 * 1024  # 64KB for streaming
 
 # In-memory storage (replace with DB in production)
 invoice_store: dict = {}
@@ -40,7 +42,7 @@ hash_chain: dict = {}  # issuer_tax_id -> last_hash
 # ============================================
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "core_engine", "version": "0.2.0"}
+    return {"status": "ok", "service": "core_engine", "version": "0.2.1"}
 
 # ============================================
 # UPLOAD API
@@ -48,27 +50,67 @@ def health_check():
 @app.post("/api/v1/invoices/upload")
 async def upload_invoice(file: UploadFile = File(...)):
     """
-    [CORE-004] Uploads a file (PDF/Image) to the ingestion queue.
-    Returns a unique file ID for processing.
+    [CORE-004] [PERF-002] Uploads a file using strict STREAMING.
+    - Rejects > 20MB (Fail Fast).
+    - Validates Magic Bytes (%PDF).
+    - Constant RAM usage (< 10MB).
     """
+    # 1. Fail Fast: Check Content-Length header
+    content_length = file.headers.get("content-length")
+    if content_length and int(content_length) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum allowed: {MAX_FILE_SIZE / 1024 / 1024}MB"
+        )
+
     try:
+        # 2. Magic Bytes Check: Read only first 4 bytes for PDF
+        # We don't use .read() without args!
+        header = await file.read(4)
+        await file.seek(0) # Reset for streaming to disk
+        
+        is_pdf = header == b"%PDF"
+        if not is_pdf and file.filename.lower().endswith(".pdf"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid PDF format: Magic bytes mismatch."
+            )
+
+        # 3. Stream to disk in chunks
         file_id = str(uuid.uuid4())
         extension = os.path.splitext(file.filename)[1]
         safe_filename = f"{file_id}{extension}"
         file_path = os.path.join(UPLOAD_DIR, safe_filename)
         
+        actual_size = 0
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            while True:
+                chunk = await file.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                actual_size += len(chunk)
+                
+                # Secondary safety check for size
+                if actual_size > MAX_FILE_SIZE:
+                    buffer.close()
+                    os.remove(file_path) # Cleanup
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail="File content exceeds size limit."
+                    )
+                buffer.write(chunk)
             
         return {
             "file_id": file_id,
             "filename": file.filename,
-            "content_type": file.content_type or "application/octet-stream",
-            "saved_path": file_path,
+            "content_type": file.content_type,
+            "size_bytes": actual_size,
             "status": "UPLOADED"
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Streaming upload failed: {str(e)}")
 
 @app.post("/api/v1/invoices/extract/{file_id}")
 async def extract_content(file_id: str):
