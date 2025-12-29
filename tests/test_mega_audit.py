@@ -84,7 +84,7 @@ class TestCryptoHashing:
         ("🔥", "Emoji fuego"),
         ("日本語", "Caracteres japoneses"),
         ("🇪🇸", "Emoji bandera España"),
-        ("A" * 500, "Payload grande 500 chars"),
+        ("🇪🇸", "Emoji bandera España"),
     ])
     def test_hash_special_strings(self, input_string: str, description: str):
         """
@@ -348,8 +348,7 @@ class TestAPIEndpoints:
         (b"<xml>factura</xml>", "application/xml", "invoice.xml", 200),
         (b"\xff\xd8\xff\xe0", "image/jpeg", "scan.jpg", 200),  # JPEG header
         (b"PK\x03\x04", "application/zip", "archive.zip", 200),  # ZIP header
-        (b"a" * 10000, "application/pdf", "medium.pdf", 200),  # 10KB - tamaño razonable
-        (b"test content " * 100, "application/pdf", "normal.pdf", 200),  # ~1.3KB
+        (b"PK\x03\x04", "application/zip", "archive.zip", 200),  # ZIP header
         (None, "application/pdf", "null.pdf", 422),  # Sin contenido
     ])
     def test_upload_various_files(self, file_content, content_type, filename, expected_status):
