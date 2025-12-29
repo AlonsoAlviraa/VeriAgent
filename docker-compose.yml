@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: veriagent_db
-    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-veriagent}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
@@ -13,6 +10,41 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./core_engine/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veriagent} -d ${POSTGRES_DB:-veriagent_core}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: veriagent_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-veriagent}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-veriagent_core}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - POSTGRES_HOST=db
+    volumes:
+      - ./uploads:/app/uploads
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    container_name: veriagent_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

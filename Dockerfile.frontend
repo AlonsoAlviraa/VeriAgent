@@ -1,0 +1,24 @@
+# [TEAM-B][DEV-002] Frontend Dockerfile
+FROM node:18-slim
+
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+RUN npm install
+
+# Copy source code
+COPY frontend/ .
+
+# Environment variables for build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+# Build application
+RUN npm run build
+
+# Exposure
+EXPOSE 3000
+
+# Command to run
+CMD ["npm", "start"]
