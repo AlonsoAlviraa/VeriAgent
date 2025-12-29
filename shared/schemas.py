@@ -58,6 +58,7 @@ class InvoiceInput(BaseModel):
     series: str = Field(default="F24", description="Invoice series")
     number: str = Field(..., description="Invoice sequence number")
     issue_date: date = Field(..., description="Date of issuance")
+    previous_invoice_hash: Optional[str] = Field(None, description="The expected hash of the previous invoice")
     
     issuer_tax_id: str = Field(..., description="NIF of the issuer")
     customer: Customer
@@ -78,6 +79,13 @@ class InvoiceInput(BaseModel):
         if abs(v - expected) > 0.01:
             raise ValueError(f'total_amount ({v}) must equal total_base + total_tax ({expected})')
         return v
+
+class InvoiceValidatedData(InvoiceInput):
+    """
+    Data contract for validated invoice data ready to be signed.
+    Used by AI agents after passing all fiscal checks.
+    """
+    confidence_score: float = Field(default=1.0, ge=0.0, le=1.0)
 
 class InvoiceOutput(BaseModel):
     """
@@ -116,7 +124,6 @@ class Invoice(InvoiceInput):
     """Full Invoice model for internal use."""
     id: UUID = Field(default_factory=uuid4, description="Internal unique identifier")
     currency: str = Field(default="EUR", description="ISO 4217 Currency Code")
-    previous_invoice_hash: Optional[str] = Field(None, description="Hash of the previous invoice for chaining")
 
     class Config:
         json_schema_extra = {
