@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from enum import Enum
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, computed_field
+from pydantic import BaseModel, Field, field_validator
 
 # ============================================
 # ENUMS
@@ -30,7 +30,7 @@ class Customer(BaseModel):
     tax_id: str = Field(..., description="NIF/CIF of the customer", min_length=8, max_length=20)
     name: str = Field(..., description="Legal name of the customer")
     address: Address
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None  # Changed from EmailStr to avoid dependency
 
 class TaxLine(BaseModel):
     """Represents a tax breakdown line (e.g., IVA 21%)."""
