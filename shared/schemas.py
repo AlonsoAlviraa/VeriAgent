@@ -1,8 +1,23 @@
 from datetime import date
 from typing import List, Optional
 from uuid import UUID, uuid4
+from enum import Enum
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, computed_field
+
+# ============================================
+# ENUMS
+# ============================================
+class InvoiceStatus(str, Enum):
+    PENDING = "PENDING"
+    VALIDATED = "VALIDATED"
+    SIGNED = "SIGNED"
+    SENT = "SENT"
+    ERROR = "ERROR"
+
+# ============================================
+# SHARED MODELS (Input/Output Contracts)
+# ============================================
 
 class Address(BaseModel):
     street: str
@@ -12,7 +27,7 @@ class Address(BaseModel):
 
 class Customer(BaseModel):
     """Represents a client/customer entity for the invoice."""
-    tax_id: str = Field(..., description="NIF/CIF of the customer")
+    tax_id: str = Field(..., description="NIF/CIF of the customer", min_length=8, max_length=20)
     name: str = Field(..., description="Legal name of the customer")
     address: Address
     email: Optional[EmailStr] = None
@@ -31,17 +46,18 @@ class InvoiceLine(BaseModel):
     unit_price: float
     total_amount: float
 
-class Invoice(BaseModel):
+# ============================================
+# INVOICE SCHEMA (Main Contract)
+# ============================================
+
+class InvoiceInput(BaseModel):
     """
-    Main Invoice Model.
-    Represents the structured data comprising a valid invoice for VeriFactu.
+    INPUT Contract: What the AI Agent sends to Core Engine.
+    Used by Team B to structure data for processing.
     """
-    id: UUID = Field(default_factory=uuid4, description="Internal unique identifier")
     series: str = Field(default="F24", description="Invoice series")
     number: str = Field(..., description="Invoice sequence number")
-    
     issue_date: date = Field(..., description="Date of issuance")
-    due_date: Optional[date] = None
     
     issuer_tax_id: str = Field(..., description="NIF of the issuer")
     customer: Customer
@@ -53,9 +69,53 @@ class Invoice(BaseModel):
     total_tax: float = Field(..., description="Sum of all tax amounts")
     total_amount: float = Field(..., description="Grand total (Base + Tax)")
     
-    currency: str = Field(default="EUR", description="ISO 4217 Currency Code")
+    @field_validator('total_amount')
+    @classmethod
+    def validate_total(cls, v, info):
+        base = info.data.get('total_base', 0)
+        tax = info.data.get('total_tax', 0)
+        expected = base + tax
+        if abs(v - expected) > 0.01:
+            raise ValueError(f'total_amount ({v}) must equal total_base + total_tax ({expected})')
+        return v
+
+class InvoiceOutput(BaseModel):
+    """
+    OUTPUT Contract: What Core Engine returns to AI Agent.
+    """
+    id: UUID
+    series: str
+    number: str
+    status: InvoiceStatus
+    invoice_hash: str
+    previous_invoice_hash: Optional[str] = None
+    xml_preview: Optional[str] = None # First 500 chars
+    message: str = "OK"
+
+class SignRequest(BaseModel):
+    """Request to sign an invoice (Team B -> Team A)."""
+    invoice_id: UUID
     
-    # Placeholder for VeriFactu specific fields
+class SignResponse(BaseModel):
+    """Response after signing (Team A -> Team B)."""
+    invoice_id: UUID
+    signed: bool
+    signature_hash: Optional[str] = None
+    error: Optional[str] = None
+
+class ErrorResponse(BaseModel):
+    """Standard error response."""
+    error_code: str
+    message: str
+    details: Optional[dict] = None
+
+# ============================================
+# LEGACY COMPATIBILITY (Keep existing tests working)
+# ============================================
+class Invoice(InvoiceInput):
+    """Full Invoice model for internal use."""
+    id: UUID = Field(default_factory=uuid4, description="Internal unique identifier")
+    currency: str = Field(default="EUR", description="ISO 4217 Currency Code")
     previous_invoice_hash: Optional[str] = Field(None, description="Hash of the previous invoice for chaining")
 
     class Config:

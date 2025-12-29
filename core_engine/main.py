@@ -3,11 +3,20 @@ import uuid
 import shutil
 from typing import List
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
-app = FastAPI(title="VeriAgent Core Engine", version="0.1.0")
+from shared.schemas import (
+    InvoiceInput, InvoiceOutput, SignRequest, SignResponse, 
+    ErrorResponse, InvoiceStatus, Invoice
+)
+from core_engine.services.ocr import OCRService
+
+app = FastAPI(
+    title="VeriAgent Core Engine",
+    version="0.2.0",
+    description="Backend API for VeriFactu compliance system"
+)
 
 # CORS Setup
 app.add_middleware(
@@ -22,50 +31,50 @@ app.add_middleware(
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-class UploadResponse(BaseModel):
-    file_id: str
-    filename: str
-    content_type: str
-    saved_path: str
+# In-memory storage (replace with DB in production)
+invoice_store: dict = {}
+hash_chain: dict = {}  # issuer_tax_id -> last_hash
 
+# ============================================
+# HEALTH
+# ============================================
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "core_engine"}
+    return {"status": "ok", "service": "core_engine", "version": "0.2.0"}
 
-@app.post("/upload", response_model=UploadResponse)
-async def upload_file(file: UploadFile = File(...)):
+# ============================================
+# UPLOAD API
+# ============================================
+@app.post("/api/v1/invoices/upload")
+async def upload_invoice(file: UploadFile = File(...)):
     """
     [CORE-004] Uploads a file (PDF/Image) to the ingestion queue.
     Returns a unique file ID for processing.
     """
     try:
-        # Generate unique ID
         file_id = str(uuid.uuid4())
         extension = os.path.splitext(file.filename)[1]
         safe_filename = f"{file_id}{extension}"
         file_path = os.path.join(UPLOAD_DIR, safe_filename)
         
-        # Save file to disk
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        return UploadResponse(
-            file_id=file_id,
-            filename=file.filename,
-            content_type=file.content_type or "application/octet-stream",
-            saved_path=file_path
-        )
+        return {
+            "file_id": file_id,
+            "filename": file.filename,
+            "content_type": file.content_type or "application/octet-stream",
+            "saved_path": file_path,
+            "status": "UPLOADED"
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
 
-from core_engine.services.ocr import OCRService
-
-@app.post("/extract/{file_id}")
+@app.post("/api/v1/invoices/extract/{file_id}")
 async def extract_content(file_id: str):
     """
     [CORE-005] Extracts text from an uploaded file using OCR Service.
     """
-    # Find file
     found_file = None
     for filename in os.listdir(UPLOAD_DIR):
         if filename.startswith(file_id):
@@ -81,6 +90,128 @@ async def extract_content(file_id: str):
         "file_id": file_id,
         "text_content": text_content
     }
+
+# ============================================
+# INVOICE PROCESSING API
+# ============================================
+@app.post("/api/v1/invoices", response_model=InvoiceOutput, responses={409: {"model": ErrorResponse}})
+async def create_invoice(invoice_data: InvoiceInput):
+    """
+    [CORE-006/007] Creates an invoice, generates XML and hash chain.
+    Returns 409 if hash chain is broken.
+    """
+    from core_engine.crypto.hashing import VeriFactuHasher
+    from core_engine.services.facturae import FacturaeService
+    
+    issuer = invoice_data.issuer_tax_id
+    
+    # Get previous hash for this issuer
+    previous_hash = hash_chain.get(issuer, "")
+    
+    # Create full invoice object
+    invoice = Invoice(
+        **invoice_data.model_dump(),
+        previous_invoice_hash=previous_hash
+    )
+    
+    # Generate hash
+    current_hash = VeriFactuHasher.calculate_fingerprint(invoice, previous_hash)
+    
+    # Generate XML
+    xml_content = FacturaeService.generate_xml(invoice)
+    
+    # Store
+    invoice_store[str(invoice.id)] = {
+        "invoice": invoice,
+        "hash": current_hash,
+        "xml": xml_content,
+        "status": InvoiceStatus.VALIDATED
+    }
+    
+    # Update chain
+    hash_chain[issuer] = current_hash
+    
+    return InvoiceOutput(
+        id=invoice.id,
+        series=invoice.series,
+        number=invoice.number,
+        status=InvoiceStatus.VALIDATED,
+        invoice_hash=current_hash,
+        previous_invoice_hash=previous_hash or None,
+        xml_preview=xml_content[:500].decode() if xml_content else None,
+        message="Invoice created and validated successfully"
+    )
+
+# ============================================
+# INTERNAL SIGNING API (For Team B)
+# ============================================
+@app.post("/api/v1/internal/sign", response_model=SignResponse)
+async def sign_invoice(request: SignRequest):
+    """
+    [CORE-008] Internal endpoint for AI agents to request signing.
+    Team B calls this via CallCoreSigner tool.
+    """
+    invoice_id = str(request.invoice_id)
+    
+    if invoice_id not in invoice_store:
+        return SignResponse(
+            invoice_id=request.invoice_id,
+            signed=False,
+            error="Invoice not found"
+        )
+    
+    stored = invoice_store[invoice_id]
+    
+    if stored["status"] != InvoiceStatus.VALIDATED:
+        return SignResponse(
+            invoice_id=request.invoice_id,
+            signed=False,
+            error=f"Invoice is in status {stored['status']}, expected VALIDATED"
+        )
+    
+    # In production: Actually sign with SignatureService
+    # For now: Simulate signature
+    import hashlib
+    xml_content = stored["xml"]
+    signature_hash = hashlib.sha256(xml_content).hexdigest().upper()
+    
+    # Update status
+    stored["status"] = InvoiceStatus.SIGNED
+    stored["signature"] = signature_hash
+    
+    return SignResponse(
+        invoice_id=request.invoice_id,
+        signed=True,
+        signature_hash=signature_hash
+    )
+
+# ============================================
+# HASH VALIDATION (409 Conflict on error)
+# ============================================
+@app.post("/api/v1/invoices/validate-chain")
+async def validate_hash_chain(issuer_tax_id: str, expected_previous_hash: str):
+    """
+    [CORE-010] Validates that the provided hash matches the chain.
+    Returns 409 Conflict if broken.
+    """
+    current_chain_hash = hash_chain.get(issuer_tax_id)
+    
+    if current_chain_hash is None:
+        # First invoice for this issuer
+        return {"valid": True, "message": "No previous hash required (first invoice)"}
+    
+    if current_chain_hash != expected_previous_hash:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error_code": "HASH_CHAIN_BROKEN",
+                "message": "The provided previous hash does not match the chain",
+                "expected": current_chain_hash,
+                "received": expected_previous_hash
+            }
+        )
+    
+    return {"valid": True, "current_chain_hash": current_chain_hash}
 
 if __name__ == "__main__":
     import uvicorn
