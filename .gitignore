@@ -1,9 +1,16 @@
 __pycache__/
 *.pyc
 .env
+VeriAgent.env
 .venv/
 venv/
 .idea/
 .vscode/
 uploads/
 postgres_data/
+certs/
+*.pem
+*.p12
+*.key
+node_modules/
+.next/

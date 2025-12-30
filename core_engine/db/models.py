@@ -27,6 +27,8 @@ class InvoiceModel(Base):
     xml_content = Column(Text)
     signature = Column(LargeBinary)
     status = Column(String(20), server_default='PENDING')
+    aeat_csv = Column(String(50))  # Codigo Seguro de Verificacion from AEAT
     
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+

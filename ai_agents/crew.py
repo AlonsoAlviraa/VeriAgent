@@ -1,6 +1,44 @@
-from crewai import Agent, Task, Crew, Process
+import os
+from crewai import Agent, Task, Crew, Process, LLM
 from .tools.signer_tool import CallCoreSigner
 from .tools.search_tool import SearchRegulationTool
+
+# ============================================================================
+# ZERO-COST LLM CONFIGURATION (Multi-Provider Router)
+# ============================================================================
+
+def get_zero_cost_llm() -> LLM:
+    """
+    Configura el LLM usando proveedores gratuitos en orden de prioridad.
+    Detecta automaticamente que API keys estan disponibles.
+    
+    Capacidad total: 120+ RPM GRATIS
+    - Groq: 60 RPM (Llama 3.3 70B)
+    - Cerebras: 30 RPM (Llama 3.1 70B)
+    - Gemini: 30+ RPM (Gemini 2.0 Flash)
+    """
+    
+    # Priority order: Groq > Cerebras > Gemini > OpenRouter > OpenAI (fallback)
+    providers = [
+        ("GROQ_API_KEY", "groq/llama-3.3-70b-versatile", "Groq"),
+        ("CEREBRAS_API_KEY", "cerebras/llama-3.3-70b", "Cerebras"),  # Fixed
+        ("GEMINI_API_KEY", "gemini/gemini-1.5-flash", "Gemini"),  # Fixed
+        ("OPENROUTER_API_KEY", "openrouter/google/gemini-2.0-flash-thinking-exp:free", "OpenRouter"),
+        ("OPENAI_API_KEY", "gpt-4o-mini", "OpenAI"),  # Fallback de pago
+    ]
+    
+    for env_key, model, name in providers:
+        if os.getenv(env_key):
+            print(f"[VeriAgent] Usando LLM gratuito: {name} ({model})")
+            return LLM(model=model)
+    
+    # Si no hay ninguna key, usar un modelo local o fallar
+    print("[VeriAgent] ADVERTENCIA: No hay API keys configuradas. Los agentes no funcionaran.")
+    return LLM(model="groq/llama-3.3-70b-versatile")  # Fallback que fallara si no hay key
+
+
+# Obtener el LLM configurado
+ZERO_COST_LLM = get_zero_cost_llm()
 
 # ============================================================================
 # AGENTS DEFINITION
@@ -17,6 +55,7 @@ Fiscal_Auditor = Agent(
         "regulatory strictness."
     ),
     tools=[SearchRegulationTool(), CallCoreSigner()],
+    llm=ZERO_COST_LLM,  # Usar LLM gratuito
     verbose=True,
     allow_delegation=False,
     memory=True,
@@ -25,11 +64,11 @@ Fiscal_Auditor = Agent(
         "Comportamiento de Seguridad Obligatorio:\n"
         "1. Regla de Oro: Nunca asumas un dato. Si detectas que el OCR tiene una confianza < 90% "
         "en el NIF o el Importe Total, DETENTE inmediatamente y solicita 'HumanReview'.\n"
-        "2. Protocolo de Firma: Solo invocarás la herramienta 'core_signer' (CallCoreSigner) "
-        "si y solo si has validado matemáticamente que Base + IVA = Total (con tolerancia de 0.01€).\n"
-        "3. Reacción a Errores: Si CallCoreSigner devuelve un error relacionado con el Hash o la cadena "
+        "2. Protocolo de Firma: Solo invocaras la herramienta 'core_signer' (CallCoreSigner) "
+        "si y solo si has validado matematicamente que Base + IVA = Total (con tolerancia de 0.01).\n"
+        "3. Reaccion a Errores: Si CallCoreSigner devuelve un error relacionado con el Hash o la cadena "
         "de continuidad, no lo reintentes. Marca la factura inmediatamente como FATAL_ERROR y escala "
-        "al humano para auditoría forense."
+        "al humano para auditoria forense."
     )
 )
 
@@ -41,6 +80,7 @@ AEAT_Connector = Agent(
         "You ensure that all data is formatted correctly before submission and "
         "handle API responses with extreme care."
     ),
+    llm=ZERO_COST_LLM,  # Usar LLM gratuito
     verbose=True,
     allow_delegation=False
 )
@@ -71,3 +111,4 @@ veriagent_crew = Crew(
     process=Process.sequential,
     verbose=True
 )
+

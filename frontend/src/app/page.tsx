@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import {
   FileUp,
   CheckCircle2,
@@ -13,8 +12,7 @@ import {
   MoreVertical,
   ExternalLink,
   Info,
-  User,
-  LogOut
+  User
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -27,84 +25,26 @@ function cn(...inputs: ClassValue[]) {
 // DATA MOCKS
 // ==========================================
 const RECENT_HISTORY = [
-  { id: 1, date: "14 Oct 2023, 10:42", issuer: "Amazon Web Services", logo: "AWS", amount: "45,20 €", status: "FIRMADO" },
-  { id: 2, date: "12 Oct 2023, 16:15", issuer: "Restaurante El Paso", logo: "EP", amount: "120,50 €", status: "REVISAR" },
-  { id: 3, date: "10 Oct 2023, 09:30", issuer: "PC Componentes", logo: "PC", amount: "899,00 €", status: "RECHAZADO" },
+  { id: 1, date: "14 Oct 2023, 10:42", issuer: "Amazon Web Services", logo: "AWS", amount: "45,20 €", status: "SENT_OK", csv: "ES-29384-XJ9" },
+  { id: 2, date: "12 Oct 2023, 16:15", issuer: "Restaurante El Paso", logo: "EP", amount: "120,50 €", status: "SIGNED" },
+  { id: 3, date: "10 Oct 2023, 09:30", issuer: "PC Componentes", logo: "PC", amount: "899,00 €", status: "REJECTED_AEAT" },
 ];
 
-// ==========================================
-// COMPONENTS
-// ==========================================
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    FIRMADO: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    REVISAR: "bg-amber-50 text-amber-600 border-amber-100",
-    RECHAZADO: "bg-red-50 text-red-600 border-red-100",
-  };
-
-  const styleClass = styles[status] || "bg-slate-50 text-slate-600";
-
-  return (
-    <span className={cn("px-2 py-1 rounded-md text-[10px] font-bold border flex items-center gap-1 w-fit", styleClass)}>
-      {status === "FIRMADO" && <CheckCircle2 className="w-3 h-3" />}
-      {status === "REVISAR" && <AlertTriangle className="w-3 h-3" />}
-      {status === "RECHAZADO" && <XCircle className="w-3 h-3" />}
-      {status}
-    </span>
-  );
-};
+// Import new components
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CSVDisplay } from "@/components/ui/csv-display";
 
 import { useInvoiceStatus } from "@/hooks/use-invoice";
 import apiClient from "@/lib/api-client";
 import { InvoiceStatus } from "@/lib/types/api";
 
 export default function SmartAuditDashboard() {
-  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"IDLE" | "UPLOADING" | "PROCESSING" | "SUCCESS" | "ERROR">("IDLE");
   const [errorMsg, setErrorMsg] = useState("");
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: auditData, isLoading: isPolling } = useInvoiceStatus(invoiceId);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setActiveDropdown(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleViewReceipt = () => {
-    if (auditData?.invoice_hash) {
-      alert(`Descargando recibo con hash: ${auditData.invoice_hash}`);
-      // In production: window.open(`/api/v1/invoices/${invoiceId}/receipt`, '_blank');
-    }
-  };
-
-  const handleRowAction = (action: string, itemId: number) => {
-    setActiveDropdown(null);
-    switch (action) {
-      case 'view':
-        alert(`Ver detalles de factura #${itemId}`);
-        break;
-      case 'download':
-        alert(`Descargando factura #${itemId}`);
-        break;
-      case 'delete':
-        if (confirm(`¿Eliminar factura #${itemId}?`)) {
-          alert(`Factura #${itemId} eliminada`);
-        }
-        break;
-    }
-  };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -145,13 +85,13 @@ export default function SmartAuditDashboard() {
 
     switch (stepName) {
       case "OCR":
-        return (status === InvoiceStatus.VALIDATED || status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT) ? "done" : "loading";
+        return (status === InvoiceStatus.VALIDATED || status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT_OK) ? "done" : "loading";
       case "VALIDATION":
-        return (status === InvoiceStatus.VALIDATED || status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT) ? "done" : "pending";
+        return (status === InvoiceStatus.VALIDATED || status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT_OK) ? "done" : "pending";
       case "SIGNING":
-        return (status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT) ? "done" : (status === InvoiceStatus.VALIDATED ? "loading" : "pending");
+        return (status === InvoiceStatus.SIGNED || status === InvoiceStatus.SENT_OK) ? "done" : (status === InvoiceStatus.VALIDATED ? "loading" : "pending");
       case "AEAT":
-        return (status === InvoiceStatus.SENT) ? "done" : (status === InvoiceStatus.SIGNED ? "loading" : "pending");
+        return (status === InvoiceStatus.SENT_OK) ? "done" : (status === InvoiceStatus.SIGNED ? "loading" : "pending");
       default: return "pending";
     }
   };
@@ -171,27 +111,8 @@ export default function SmartAuditDashboard() {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Conectado con AEAT
           </div>
-          <div className="relative">
-            <div
-              onClick={() => setShowProfile(!showProfile)}
-              className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 cursor-pointer hover:ring-emerald-300 transition-all"
-            >
-              <User className="w-full h-full p-2 text-slate-400" />
-            </div>
-            {showProfile && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
-                <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                  <p className="text-sm font-bold text-slate-800">Usuario Demo</p>
-                  <p className="text-xs text-slate-500">admin@veriagent.com</p>
-                </div>
-                <button onClick={() => alert('Perfil de usuario')} className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                  <User className="w-4 h-4" /> Mi Perfil
-                </button>
-                <button onClick={() => router.push('/auth/login')} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                  <LogOut className="w-4 h-4" /> Cerrar Sesión
-                </button>
-              </div>
-            )}
+          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 cursor-pointer">
+            <User className="w-full h-full p-2 text-slate-400" />
           </div>
         </div>
       </nav>
@@ -244,46 +165,67 @@ export default function SmartAuditDashboard() {
           <div className="space-y-6">
             <div className={cn(
               "rounded-[2rem] p-8 transition-all duration-700",
-              auditData?.status === InvoiceStatus.SIGNED || auditData?.status === InvoiceStatus.SENT
+              auditData?.status === InvoiceStatus.SENT_OK
                 ? "bg-emerald-50/80 border-2 border-emerald-500/10 shadow-xl shadow-emerald-500/5 translate-y-0 opacity-100"
-                : "bg-slate-50 opacity-50 translate-y-4"
+                : auditData?.status === InvoiceStatus.REJECTED_AEAT
+                  ? "bg-red-50/80 border-2 border-red-500/10 shadow-xl translate-y-0 opacity-100"
+                  : auditData?.status === InvoiceStatus.SIGNED
+                    ? "bg-amber-50/80 border-2 border-amber-500/10 shadow-xl translate-y-0 opacity-100"
+                    : "bg-slate-50 opacity-50 translate-y-4"
             )}>
-              {auditData?.status === InvoiceStatus.ERROR ? (
+              {auditData?.status === InvoiceStatus.REJECTED_AEAT ? (
                 <div className="flex gap-4">
                   <div className="p-3 bg-red-500 rounded-2xl text-white">
+                    <XCircle className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-black text-red-900">Factura Rechazada por AEAT</h3>
+                    <p className="text-sm text-red-700 leading-relaxed italic">{auditData.message}</p>
+                    <StatusBadge status={InvoiceStatus.REJECTED_AEAT} size="md" />
+                  </div>
+                </div>
+              ) : auditData?.status === InvoiceStatus.SENT_OK ? (
+                <div className="space-y-6">
+                  <div className="flex gap-4">
+                    <div className="p-3 bg-emerald-500 rounded-2xl text-white">
+                      <CheckCircle2 className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-black text-emerald-900">Factura Enviada a Hacienda</h3>
+                      <p className="text-sm text-emerald-700 leading-relaxed italic">
+                        El registro ha sido completado exitosamente.
+                      </p>
+                      <StatusBadge status={InvoiceStatus.SENT_OK} size="md" />
+                    </div>
+                  </div>
+                  {auditData.aeat_csv && (
+                    <CSVDisplay csv={auditData.aeat_csv} />
+                  )}
+                </div>
+              ) : auditData?.status === InvoiceStatus.SIGNED ? (
+                <div className="flex gap-4">
+                  <div className="p-3 bg-amber-500 rounded-2xl text-white">
                     <AlertTriangle className="w-8 h-8" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-red-900">Error en Auditoría</h3>
-                    <p className="text-sm text-red-700 leading-relaxed italic">{auditData.message}</p>
+                    <h3 className="text-xl font-black text-amber-900">Pendiente de Envio a AEAT</h3>
+                    <p className="text-sm text-amber-700 leading-relaxed italic">
+                      Factura firmada, esperando conexion con Hacienda.
+                    </p>
+                    <StatusBadge status={InvoiceStatus.SIGNED} size="md" />
                   </div>
                 </div>
               ) : (
                 <div className="flex gap-4">
-                  <div className="p-3 bg-emerald-500 rounded-2xl text-white">
-                    <CheckCircle2 className="w-8 h-8" />
+                  <div className="p-3 bg-slate-300 rounded-2xl text-white">
+                    <Loader2 className="w-8 h-8 animate-spin" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-emerald-900">Auditoría en Curso</h3>
-                    <p className="text-sm text-emerald-700 leading-relaxed italic">
+                    <h3 className="text-xl font-black text-slate-700">Auditoria en Curso</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed italic">
                       {auditData ? `Procesando factura ${auditData.series}-${auditData.number}` : "Selecciona un archivo para comenzar."}
                     </p>
                   </div>
-                </div>
-              )}
-
-              {(auditData?.status === InvoiceStatus.SIGNED || auditData?.status === InvoiceStatus.SENT) && (
-                <div className="mt-10 flex items-center justify-between border-t border-emerald-200/50 pt-6">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">ID Registro</span>
-                    <p className="font-mono font-black text-emerald-600">ES-29384-XJ9</p>
-                  </div>
-                  <button
-                    onClick={handleViewReceipt}
-                    className="flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline translate-y-1"
-                  >
-                    Ver Recibo <ExternalLink className="w-4 h-4" />
-                  </button>
                 </div>
               )}
             </div>
@@ -304,12 +246,7 @@ export default function SmartAuditDashboard() {
         <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-lg font-black text-slate-800">Historial Reciente</h3>
-            <button
-              onClick={() => router.push('/history')}
-              className="text-emerald-500 text-sm font-bold hover:underline"
-            >
-              Ver todo →
-            </button>
+            <button className="text-emerald-500 text-sm font-bold hover:underline">Ver todo →</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -338,39 +275,10 @@ export default function SmartAuditDashboard() {
                     <td className="py-5 pl-8">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="py-5 text-right pr-2 relative">
-                      <button
-                        onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600"
-                      >
+                    <td className="py-5 text-right pr-2">
+                      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-300">
                         <MoreVertical className="w-4 h-4" />
                       </button>
-                      {activeDropdown === item.id && (
-                        <div
-                          ref={dropdownRef}
-                          className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50"
-                        >
-                          <button
-                            onClick={() => handleRowAction('view', item.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <ExternalLink className="w-4 h-4" /> Ver detalles
-                          </button>
-                          <button
-                            onClick={() => handleRowAction('download', item.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" /> Descargar
-                          </button>
-                          <hr className="my-1 border-slate-100" />
-                          <button
-                            onClick={() => handleRowAction('delete', item.id)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <XCircle className="w-4 h-4" /> Eliminar
-                          </button>
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))}

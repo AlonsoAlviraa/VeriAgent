@@ -74,6 +74,42 @@ def verify_e2e():
         print(f"      ID: {invoice.id}")
         print(f"      Hash: {invoice.invoice_hash}")
         
+        # ====================================================
+        # [STEP 5] OPCIONAL: Envío a AEAT (Si hay certificados)
+        # ====================================================
+        aeat_cert = os.getenv("AEAT_CERT_PATH", "./certs/test_cert.pem")
+        aeat_key = os.getenv("AEAT_KEY_PATH", "./certs/test_key.pem")
+        
+        if os.path.exists(aeat_cert) and os.path.exists(aeat_key):
+            print("\n[5/5] Enviando a AEAT (Sandbox)...")
+            from core_engine.aeat_connector import send_to_aeat
+            
+            # Construir un XML de demo para la prueba
+            demo_xml = f"""<RegistroAlta>
+                <IDFactura>
+                    <IDEmisorFactura>{invoice.issuer_tax_id}</IDEmisorFactura>
+                    <NumSerieFactura>{invoice.series}-{invoice.number}</NumSerieFactura>
+                    <FechaExpedicionFactura>{invoice.issue_date}</FechaExpedicionFactura>
+                </IDFactura>
+                <Huella>{invoice.invoice_hash}</Huella>
+            </RegistroAlta>"""
+            
+            success, message, csv = send_to_aeat(
+                xml_content=demo_xml,
+                certificate_path=aeat_cert,
+                private_key_path=aeat_key,
+                environment=os.getenv("AEAT_ENV", "SANDBOX")
+            )
+            
+            if success:
+                print(f"      ✅ AEAT Response: {message}")
+                print(f"      CSV: {csv}")
+            else:
+                print(f"      ⚠️ AEAT Error: {message}")
+        else:
+            print("\n[5/5] SKIPPED: No se encontraron certificados para envío AEAT.")
+            print(f"      Esperados: {aeat_cert}, {aeat_key}")
+
     except Exception as e:
         print(f"!!! VERIFICATION FAILED: {str(e)}")
         sys.exit(1)

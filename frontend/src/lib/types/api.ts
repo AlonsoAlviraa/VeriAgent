@@ -1,8 +1,10 @@
 export enum InvoiceStatus {
-    PENDING = "PENDING",
+    DRAFT = "DRAFT",
+    PROCESSING = "PROCESSING",
     VALIDATED = "VALIDATED",
-    SIGNED = "SIGNED",
-    SENT = "SENT",
+    SIGNED = "SIGNED",           // Yellow - Signed but pending AEAT submission
+    SENT_OK = "SENT_OK",         // Green - AEAT accepted
+    REJECTED_AEAT = "REJECTED_AEAT", // Red - AEAT rejected
     ERROR = "ERROR",
 }
 
@@ -61,7 +63,9 @@ export interface InvoiceOutput {
     previous_invoice_hash?: string;
     xml_preview?: string;
     message: string;
+    aeat_csv?: string; // Codigo Seguro de Verificacion from AEAT
 }
+
 
 export interface SignRequest {
     invoice_id: string;
