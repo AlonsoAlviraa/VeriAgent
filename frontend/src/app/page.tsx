@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   FileUp,
   CheckCircle2,
@@ -12,7 +13,8 @@ import {
   MoreVertical,
   ExternalLink,
   Info,
-  User
+  User,
+  LogOut
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -58,12 +60,51 @@ import apiClient from "@/lib/api-client";
 import { InvoiceStatus } from "@/lib/types/api";
 
 export default function SmartAuditDashboard() {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"IDLE" | "UPLOADING" | "PROCESSING" | "SUCCESS" | "ERROR">("IDLE");
   const [errorMsg, setErrorMsg] = useState("");
+  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: auditData, isLoading: isPolling } = useInvoiceStatus(invoiceId);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleViewReceipt = () => {
+    if (auditData?.invoice_hash) {
+      alert(`Descargando recibo con hash: ${auditData.invoice_hash}`);
+      // In production: window.open(`/api/v1/invoices/${invoiceId}/receipt`, '_blank');
+    }
+  };
+
+  const handleRowAction = (action: string, itemId: number) => {
+    setActiveDropdown(null);
+    switch (action) {
+      case 'view':
+        alert(`Ver detalles de factura #${itemId}`);
+        break;
+      case 'download':
+        alert(`Descargando factura #${itemId}`);
+        break;
+      case 'delete':
+        if (confirm(`¿Eliminar factura #${itemId}?`)) {
+          alert(`Factura #${itemId} eliminada`);
+        }
+        break;
+    }
+  };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -130,8 +171,27 @@ export default function SmartAuditDashboard() {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Conectado con AEAT
           </div>
-          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 cursor-pointer">
-            <User className="w-full h-full p-2 text-slate-400" />
+          <div className="relative">
+            <div
+              onClick={() => setShowProfile(!showProfile)}
+              className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 cursor-pointer hover:ring-emerald-300 transition-all"
+            >
+              <User className="w-full h-full p-2 text-slate-400" />
+            </div>
+            {showProfile && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
+                <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                  <p className="text-sm font-bold text-slate-800">Usuario Demo</p>
+                  <p className="text-xs text-slate-500">admin@veriagent.com</p>
+                </div>
+                <button onClick={() => alert('Perfil de usuario')} className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                  <User className="w-4 h-4" /> Mi Perfil
+                </button>
+                <button onClick={() => router.push('/auth/login')} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                  <LogOut className="w-4 h-4" /> Cerrar Sesión
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -218,7 +278,10 @@ export default function SmartAuditDashboard() {
                     <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">ID Registro</span>
                     <p className="font-mono font-black text-emerald-600">ES-29384-XJ9</p>
                   </div>
-                  <button className="flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline translate-y-1">
+                  <button
+                    onClick={handleViewReceipt}
+                    className="flex items-center gap-2 text-emerald-600 font-bold text-sm hover:underline translate-y-1"
+                  >
                     Ver Recibo <ExternalLink className="w-4 h-4" />
                   </button>
                 </div>
@@ -241,7 +304,12 @@ export default function SmartAuditDashboard() {
         <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-lg font-black text-slate-800">Historial Reciente</h3>
-            <button className="text-emerald-500 text-sm font-bold hover:underline">Ver todo →</button>
+            <button
+              onClick={() => router.push('/history')}
+              className="text-emerald-500 text-sm font-bold hover:underline"
+            >
+              Ver todo →
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -270,10 +338,39 @@ export default function SmartAuditDashboard() {
                     <td className="py-5 pl-8">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="py-5 text-right pr-2">
-                      <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-300">
+                    <td className="py-5 text-right pr-2 relative">
+                      <button
+                        onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
+                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600"
+                      >
                         <MoreVertical className="w-4 h-4" />
                       </button>
+                      {activeDropdown === item.id && (
+                        <div
+                          ref={dropdownRef}
+                          className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50"
+                        >
+                          <button
+                            onClick={() => handleRowAction('view', item.id)}
+                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <ExternalLink className="w-4 h-4" /> Ver detalles
+                          </button>
+                          <button
+                            onClick={() => handleRowAction('download', item.id)}
+                            className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Download className="w-4 h-4" /> Descargar
+                          </button>
+                          <hr className="my-1 border-slate-100" />
+                          <button
+                            onClick={() => handleRowAction('delete', item.id)}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <XCircle className="w-4 h-4" /> Eliminar
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
