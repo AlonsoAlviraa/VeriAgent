@@ -9,8 +9,10 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      # Volumente persistente — la deuda del README ("PG no persiste") se resuelve aquí.
       - postgres_data:/var/lib/postgresql/data
-      - ./core_engine/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      # Carga el DDL completo (idempotente) al inicializar la DB.
+      - ./core_engine/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veriagent} -d ${POSTGRES_DB:-veriagent_core}"]
       interval: 10s
@@ -28,11 +30,30 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Data plane: PostgreSQL persistente.
       - DATABASE_URL=postgresql://${POSTGRES_USER:-veriagent}:${POSTGRES_PASSWORD:-securepassword}@db:5432/${POSTGRES_DB:-veriagent_core}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - POSTGRES_HOST=db
+      - VERIAGENT_AUTO_INIT_DB=1
+      # Zero-cost router: todas las claves free (no solo OpenAI).
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # AEAT.
+      - AEAT_ENV=${AEAT_ENV:-SANDBOX}
+      - AEAT_CERT_PATH=${AEAT_CERT_PATH:-/app/certs/test_cert.pem}
+      - AEAT_KEY_PATH=${AEAT_KEY_PATH:-/app/certs/test_key.pem}
+      # Webhooks (opcional).
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
     volumes:
       - ./uploads:/app/uploads
+      - ./certs:/app/certs:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   frontend:
     build:
@@ -44,7 +65,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

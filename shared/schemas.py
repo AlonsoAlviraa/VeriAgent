@@ -5,6 +5,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
+from core_engine.validators.fiscal_id import FiscalIdError, validate_fiscal_id
+
 # ============================================
 # ENUMS
 # ============================================
@@ -13,6 +15,8 @@ class InvoiceStatus(str, Enum):
     VALIDATED = "VALIDATED"
     SIGNED = "SIGNED"
     SENT = "SENT"
+    SENT_OK = "SENT_OK"
+    REJECTED_AEAT = "REJECTED_AEAT"
     ERROR = "ERROR"
 
 # ============================================
@@ -27,10 +31,18 @@ class Address(BaseModel):
 
 class Customer(BaseModel):
     """Represents a client/customer entity for the invoice."""
-    tax_id: str = Field(..., description="NIF/CIF of the customer", min_length=8, max_length=20)
+    tax_id: str = Field(..., description="NIF/CIF/NIE of the customer", min_length=8, max_length=20)
     name: str = Field(..., description="Legal name of the customer")
     address: Address
     email: Optional[str] = None  # Changed from EmailStr to avoid dependency
+
+    @field_validator("tax_id")
+    @classmethod
+    def validate_customer_tax_id(cls, v: str) -> str:
+        try:
+            return validate_fiscal_id(v)
+        except FiscalIdError as exc:
+            raise ValueError(str(exc)) from exc
 
 class TaxLine(BaseModel):
     """Represents a tax breakdown line (e.g., IVA 21%)."""
@@ -60,7 +72,7 @@ class InvoiceInput(BaseModel):
     issue_date: date = Field(..., description="Date of issuance")
     previous_invoice_hash: Optional[str] = Field(None, description="The expected hash of the previous invoice")
     
-    issuer_tax_id: str = Field(..., description="NIF of the issuer")
+    issuer_tax_id: str = Field(..., description="NIF/CIF/NIE of the issuer")
     customer: Customer
     
     lines: List[InvoiceLine]
@@ -69,6 +81,14 @@ class InvoiceInput(BaseModel):
     total_base: float = Field(..., description="Sum of all base amounts")
     total_tax: float = Field(..., description="Sum of all tax amounts")
     total_amount: float = Field(..., description="Grand total (Base + Tax)")
+
+    @field_validator("issuer_tax_id")
+    @classmethod
+    def validate_issuer_tax_id(cls, v: str) -> str:
+        try:
+            return validate_fiscal_id(v)
+        except FiscalIdError as exc:
+            raise ValueError(str(exc)) from exc
     
     @field_validator('total_amount')
     @classmethod
@@ -117,6 +137,43 @@ class ErrorResponse(BaseModel):
     message: str
     details: Optional[dict] = None
 
+
+# ============================================
+# CONTROL PLANE CONTRACTS (PR-MT-01)
+# ============================================
+
+class TenantPlan(str, Enum):
+    STANDARD = "standard"
+    ENTERPRISE = "enterprise"
+
+
+class CreateTenantRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    slug: str = Field(..., min_length=2, max_length=100, pattern=r"^[a-z0-9][a-z0-9-]*$")
+    plan_id: TenantPlan = TenantPlan.STANDARD
+    connection_ref: Optional[str] = Field(
+        None,
+        description="Optional data-plane connection ref; defaults by plan tier",
+    )
+
+
+class TenantResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    plan_id: str
+    status: str
+    tier: Optional[str] = None
+    connection_ref: Optional[str] = None
+
+
+class DataPlaneResolveResponse(BaseModel):
+    tenant_id: str
+    plan_id: str
+    tier: str
+    connection_ref: str
+
+
 # ============================================
 # LEGACY COMPATIBILITY (Keep existing tests working)
 # ============================================
@@ -131,9 +188,9 @@ class Invoice(InvoiceInput):
                 "series": "F24",
                 "number": "001",
                 "issue_date": "2024-01-15",
-                "issuer_tax_id": "B12345678",
+                "issuer_tax_id": "B12345674",
                 "customer": {
-                    "tax_id": "A98765432",
+                    "tax_id": "A98765431",
                     "name": "Empresa Cliente S.L.",
                     "address": {
                         "street": "Calle Mayor 1",

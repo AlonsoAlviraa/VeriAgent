@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 
 ENDPOINTS = {
     "SANDBOX": "https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP",
-    # [SECURITY] Production - Uncomment only in controlled environments
-    # "PRODUCTION": "https://www1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP",
+    # PRODUCTION only reachable when caller passes environment="PRODUCTION"
+    # AND tenant feature flag PROD_AEAT_ENABLED is true (enforced in send_invoice_to_aeat).
+    "PRODUCTION": "https://www1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP",
 }
 
 # SOAP Action for the RegFactuSistemaFacturacion operation
@@ -308,6 +309,37 @@ class AEATConnector:
 # CONVENIENCE FUNCTION
 # ============================================================
 
+def build_registro_alta_payload(
+    issuer_nif: str,
+    issuer_name: str,
+    series: str,
+    number: str,
+    issue_date: str,
+    total_amount: float,
+    invoice_hash: str,
+    previous_hash: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Complete RegistroAlta-style dict for tests and outbox workers (COMP-05)."""
+    return {
+        "IDVersion": "1.0",
+        "IDFactura": {
+            "IDEmisorFactura": issuer_nif,
+            "NumSerieFactura": f"{series}{number}",
+            "FechaExpedicionFactura": issue_date,
+        },
+        "NombreRazonEmisor": issuer_name,
+        "TipoFactura": "F1",
+        "DescripcionOperacion": "Factura VeriFactu",
+        "ImporteTotal": f"{float(total_amount):.2f}",
+        "Huella": invoice_hash,
+        "HuellaAnterior": previous_hash or "",
+        "SistemaInformatico": {
+            "NombreSistemaInformatico": "VeriAgent",
+            "IdSistemaInformatico": "VERIAGENT-1",
+        },
+    }
+
+
 def send_invoice_to_aeat(
     issuer_nif: str,
     issuer_name: str,
@@ -317,14 +349,55 @@ def send_invoice_to_aeat(
     total_amount: float,
     invoice_hash: str,
     previous_hash: Optional[str] = None,
-    environment: str = "SANDBOX"
+    environment: str = "SANDBOX",
+    prod_aeat_enabled: bool = False,
+    allow_missing_certs: bool = False,
 ) -> Dict[str, Any]:
     """
-    Funcion simplificada para enviar una factura a la AEAT.
+    Fail-closed AEAT remittance (COMP-05 / MT-06).
 
-    Returns:
-        Dict con status, csv (si exito), o error_description (si error)
+    - Missing certs → ERROR (never soft-success), unless allow_missing_certs for unit mocks.
+    - PRODUCTION requires prod_aeat_enabled=True (per-tenant flag).
+    - Always builds complete RegistroAlta payload metadata in the response.
     """
+    payload = build_registro_alta_payload(
+        issuer_nif,
+        issuer_name,
+        series,
+        number,
+        issue_date,
+        total_amount,
+        invoice_hash,
+        previous_hash,
+    )
+
+    env = (environment or "SANDBOX").upper()
+    if env == "PRODUCTION" and not prod_aeat_enabled:
+        return {
+            "status": "ERROR",
+            "error_code": "PROD_AEAT_DISABLED",
+            "error_description": "PRODUCTION remittance blocked: PROD_AEAT_ENABLED is false",
+            "registro_alta": payload,
+        }
+
+    cert_path = os.getenv("AEAT_CERT_PATH")
+    key_path = os.getenv("AEAT_KEY_PATH")
+    if not allow_missing_certs:
+        if not cert_path or not key_path:
+            return {
+                "status": "ERROR",
+                "error_code": "CERTS_MISSING",
+                "error_description": "AEAT certificates not configured (fail-closed)",
+                "registro_alta": payload,
+            }
+        if not Path(cert_path).exists() or not Path(key_path).exists():
+            return {
+                "status": "ERROR",
+                "error_code": "CERTS_NOT_FOUND",
+                "error_description": "AEAT certificate files not found (fail-closed)",
+                "registro_alta": payload,
+            }
+
     invoice = InvoiceData(
         issuer_nif=issuer_nif,
         issuer_name=issuer_name,
@@ -333,13 +406,26 @@ def send_invoice_to_aeat(
         issue_date=issue_date,
         total_amount=total_amount,
         invoice_hash=invoice_hash,
-        previous_hash=previous_hash
+        previous_hash=previous_hash,
     )
 
-    connector = AEATConnector(environment=environment)
-    response = connector.send_invoice(invoice)
+    if env not in ENDPOINTS:
+        return {
+            "status": "ERROR",
+            "error_code": "BAD_ENVIRONMENT",
+            "error_description": f"Unsupported environment {env}",
+            "registro_alta": payload,
+        }
 
-    return response.to_dict()
+    connector = AEATConnector(
+        cert_path=cert_path,
+        key_path=key_path,
+        environment=env if env in ENDPOINTS else "SANDBOX",
+    )
+    response = connector.send_invoice(invoice)
+    out = response.to_dict()
+    out["registro_alta"] = payload
+    return out
 
 
 # ============================================================
@@ -372,7 +458,7 @@ if __name__ == "__main__":
 
         print("\n[Demo] Estructura de factura de prueba:")
         demo_invoice = InvoiceData(
-            issuer_nif="B12345678",
+            issuer_nif="B12345674",
             issuer_name="VeriAgent Test SL",
             series="FA",
             number="2024-001",

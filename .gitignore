@@ -14,3 +14,17 @@ certs/
 *.key
 node_modules/
 .next/
+
+# Runs del ProductGraph (artifacts locales de IA)
+runs/
+run9*.log
+*.log
+
+# ChromaDB local
+chroma_db/
+
+# Config de herramientas de IA locales
+.grok/
+
+# Data local (memoria de feedback, baselines de eval)
+data/
