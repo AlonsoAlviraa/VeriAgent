@@ -23,9 +23,9 @@ def verify_e2e():
         "series": "E2E",
         "number": "001",
         "issue_date": date.today().isoformat(),
-        "issuer_tax_id": "B12345678",
+        "issuer_tax_id": "B12345674",
         "customer": {
-            "tax_id": "A99999999",
+            "tax_id": "A11111119",
             "name": "QA Test Client",
             "address": {
                 "street": "Calle Falsa 123",

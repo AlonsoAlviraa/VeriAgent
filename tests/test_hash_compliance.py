@@ -19,7 +19,7 @@ class TestHashChainCompliance(unittest.TestCase):
     
     def setUp(self):
         self.customer = Customer(
-            tax_id="B99999999",
+            tax_id="B99999997",
             name="Test Corp",
             address=Address(street="Test St", city="Madrid", postal_code="28000")
         )
@@ -28,7 +28,7 @@ class TestHashChainCompliance(unittest.TestCase):
         """Same invoice data MUST produce same hash."""
         inv = Invoice(
             number="001", series="F25", issue_date=date(2025, 1, 1),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=100, total_tax=21, total_amount=121
         )
         
@@ -42,13 +42,13 @@ class TestHashChainCompliance(unittest.TestCase):
         """Different amounts MUST produce different hashes."""
         inv1 = Invoice(
             number="001", series="F25", issue_date=date(2025, 1, 1),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=100, total_tax=21, total_amount=121
         )
         
         inv2 = Invoice(
             number="001", series="F25", issue_date=date(2025, 1, 1),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=100, total_tax=22, total_amount=122  # Different!
         )
         
@@ -62,7 +62,7 @@ class TestHashChainCompliance(unittest.TestCase):
         """Hash chain MUST include previous hash."""
         inv1 = Invoice(
             number="001", series="F25", issue_date=date(2025, 1, 1),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=100, total_tax=21, total_amount=121
         )
         
@@ -70,7 +70,7 @@ class TestHashChainCompliance(unittest.TestCase):
         
         inv2 = Invoice(
             number="002", series="F25", issue_date=date(2025, 1, 2),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=200, total_tax=42, total_amount=242
         )
         
@@ -84,7 +84,7 @@ class TestHashChainCompliance(unittest.TestCase):
         """validate_chain MUST return False on tampered hash."""
         inv = Invoice(
             number="001", series="F25", issue_date=date(2025, 1, 1),
-            issuer_tax_id="A11111111", customer=self.customer,
+            issuer_tax_id="A11111119", customer=self.customer,
             lines=[], taxes=[], total_base=100, total_tax=21, total_amount=121
         )
         

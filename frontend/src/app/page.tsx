@@ -33,6 +33,7 @@ const RECENT_HISTORY = [
 // Import new components
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CSVDisplay } from "@/components/ui/csv-display";
+import { OrgSwitcher, ChainIntegrityBadgeLive } from "@/components/org/org-switcher";
 
 import { useInvoiceStatus } from "@/hooks/use-invoice";
 import apiClient from "@/lib/api-client";
@@ -41,6 +42,7 @@ import { InvoiceStatus } from "@/lib/types/api";
 export default function SmartAuditDashboard() {
   const [file, setFile] = useState<File | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string>("default");
   const [uploadStatus, setUploadStatus] = useState<"IDLE" | "UPLOADING" | "PROCESSING" | "SUCCESS" | "ERROR">("IDLE");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -107,6 +109,15 @@ export default function SmartAuditDashboard() {
           <span className="font-bold text-slate-800 text-lg">VeriAgent</span>
         </div>
         <div className="flex items-center gap-6">
+          <OrgSwitcher
+            value={tenantId}
+            onChange={setTenantId}
+            orgs={[
+              { id: "default", name: "Default", plan: "standard" },
+              { id: "enterprise-demo", name: "Enterprise demo", plan: "enterprise" },
+            ]}
+          />
+          <ChainIntegrityBadgeLive issuerTaxId="B12345674" />
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold border border-emerald-100 uppercase tracking-tight">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Conectado con AEAT

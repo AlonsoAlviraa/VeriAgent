@@ -34,7 +34,7 @@ def sample_customer():
     """Base customer fixture for tests."""
     from shared.schemas import Customer, Address
     return Customer(
-        tax_id="B12345678",
+        tax_id="B12345674",
         name="Test Corp S.L.",
         address=Address(street="Calle Test 1", city="Madrid", postal_code="28001")
     )
@@ -47,7 +47,7 @@ def sample_invoice(sample_customer):
         number="001",
         series="F25",
         issue_date=date.today(),
-        issuer_tax_id="A11111111",
+        issuer_tax_id="A11111119",
         customer=sample_customer,
         lines=[],
         taxes=[],
@@ -125,7 +125,7 @@ class TestCryptoHashing:
                 number=str(i+1).zfill(3),
                 series="F25",
                 issue_date=date(2025, 1, i+1),
-                issuer_tax_id="A11111111",
+                issuer_tax_id="A11111119",
                 customer=sample_customer,
                 lines=[], taxes=[],
                 total_base=100.0 * (i+1),
@@ -210,10 +210,10 @@ class TestSchemaValidation:
         ("X1234567L", "NIE válido X"),
         ("Y1234567X", "NIE válido Y"),
         ("Z1234567R", "NIE válido Z"),
-        ("A12345678", "CIF válido A"),
-        ("B12345678", "CIF válido B"),
-        ("G12345678", "CIF válido G (Asociación)"),
-        ("Q1234567H", "CIF válido Q (Organismo)"),
+        ("A11111119", "CIF válido A"),
+        ("B12345674", "CIF válido B"),
+        ("G12345674", "CIF válido G (Asociación)"),
+        ("Q1234567D", "CIF válido Q (Organismo)"),
     ]
     
     INVALID_NIFS = [
@@ -239,7 +239,7 @@ class TestSchemaValidation:
             name="Test",
             address=Address(street="S", city="C", postal_code="00000")
         )
-        assert customer.tax_id == nif
+        assert customer.tax_id == nif.upper()
     
     @pytest.mark.parametrize("nif,description", INVALID_NIFS)
     def test_invalid_nifs_format(self, nif: str, description: str):
@@ -249,16 +249,12 @@ class TestSchemaValidation:
         from shared.schemas import Customer, Address
         from pydantic import ValidationError
         
-        # NIFs vacíos o muy cortos deben fallar por min_length
-        if len(nif) < 8:
-            with pytest.raises(ValidationError):
-                Customer(
-                    tax_id=nif,
-                    name="Test",
-                    address=Address(street="S", city="C", postal_code="00000")
-                )
-        # Los demás pasan formato pero fallarían en validación de algoritmo
-        # (no implementada en MVP)
+        with pytest.raises(ValidationError):
+            Customer(
+                tax_id=nif,
+                name="Test",
+                address=Address(street="S", city="C", postal_code="00000")
+            )
     
     # --- Test 46-55: Importes ---
     @pytest.mark.parametrize("base,tax,total,should_pass", [
@@ -285,7 +281,7 @@ class TestSchemaValidation:
         if should_pass:
             inv = InvoiceInput(
                 number="001", series="F25", issue_date=date.today(),
-                issuer_tax_id="A11111111", customer=sample_customer,
+                issuer_tax_id="A11111119", customer=sample_customer,
                 lines=[], taxes=[],
                 total_base=base, total_tax=tax, total_amount=total
             )
@@ -294,7 +290,7 @@ class TestSchemaValidation:
             with pytest.raises(ValidationError):
                 InvoiceInput(
                     number="001", series="F25", issue_date=date.today(),
-                    issuer_tax_id="A11111111", customer=sample_customer,
+                    issuer_tax_id="A11111119", customer=sample_customer,
                     lines=[], taxes=[],
                     total_base=base, total_tax=tax, total_amount=total
                 )
@@ -319,7 +315,7 @@ class TestSchemaValidation:
         # Anotamos que DEBERÍA validarse en producción
         inv = InvoiceInput(
             number="001", series="F25", issue_date=issue_date,
-            issuer_tax_id="A11111111", customer=sample_customer,
+            issuer_tax_id="A11111119", customer=sample_customer,
             lines=[], taxes=[],
             total_base=100.0, total_tax=21.0, total_amount=121.0
         )
@@ -342,25 +338,25 @@ class TestAPIEndpoints:
     # --- Test 61-70: Upload de archivos ---
     @pytest.mark.parametrize("file_content,content_type,filename,expected_status", [
         (b"%PDF-1.4 valid pdf content", "application/pdf", "invoice.pdf", 200),
-        (b"%PDF-1.4 empty", "application/pdf", "empty.pdf", 200),  # 0 bytes (ahora con header)
-        (b"This is plain text", "text/plain", "fake.txt", 200),  # Cambiado a .txt para pasar
-        (b"%PDF-corrupt", "application/pdf", "corrupt.pdf", 200),  # Corrupto pero con magic check
-        (b"<xml>factura</xml>", "application/xml", "invoice.xml", 200),
-        (b"\xff\xd8\xff\xe0", "image/jpeg", "scan.jpg", 200),  # JPEG header
-        (b"PK\x03\x04", "application/zip", "archive.zip", 200),  # ZIP header
-        (b"PK\x03\x04", "application/zip", "archive.zip", 200),  # ZIP header
-        (None, "application/pdf", "null.pdf", 422),  # Sin contenido
+        (b"%PDF-1.4 empty", "application/pdf", "empty.pdf", 200),  # magic bytes válidos
+        (b"%PDF-1.4 corrupt payload", "application/pdf", "corrupt.pdf", 200),  # magic ok, contenido malo
+        (b"<?xml version='1.0'?><Facturae/>", "application/xml", "invoice.xml", 200),
+        (b"This is plain text", "text/plain", "fake.txt", 400),  # extensión no permitida
+        (b"\xff\xd8\xff\xe0", "image/jpeg", "scan.jpg", 400),     # extensión no permitida
+        (b"PK\x03\x04", "application/zip", "archive.zip", 400),   # extensión no permitida
+        (b"not a real pdf", "application/pdf", "fake.pdf", 400),  # .pdf sin magic bytes %PDF
+        (None, "application/pdf", "null.pdf", 422),               # sin archivo
     ])
     def test_upload_various_files(self, file_content, content_type, filename, expected_status):
         """
         [API-061 a API-070] Upload de diferentes tipos de archivo.
-        El sistema debe aceptar archivos y validar posteriormente.
+        El sistema valida extensión (.pdf/.xml) y magic bytes para .pdf.
         """
         from fastapi.testclient import TestClient
         from core_engine.main import app
-        
+
         client = TestClient(app)
-        
+
         if file_content is None:
             # Simular request sin archivo
             response = client.post("/api/v1/invoices/upload")

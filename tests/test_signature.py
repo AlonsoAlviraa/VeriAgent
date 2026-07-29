@@ -1,30 +1,46 @@
+"""
+Tests para SignatureService.
+
+Actualizado al contrato real (core_engine/services/signature.py): el servicio es
+un helper ligero stub-capable que NO carga certificados PKCS12 en __init__.
+La firma XAdES real (signxml) se introduce en Sprints 5-6 del plan de mejora.
+"""
 import sys
 import os
 import unittest
-from unittest.mock import MagicMock, patch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Mock cryptography to avoid need for real .p12 file in CI env
-sys.modules['cryptography'] = MagicMock()
-sys.modules['cryptography.hazmat'] = MagicMock()
-sys.modules['cryptography.hazmat.primitives'] = MagicMock()
-sys.modules['cryptography.hazmat.primitives.serialization'] = MagicMock()
-sys.modules['cryptography.hazmat.primitives.serialization.pkcs12'] = MagicMock()
-
 from core_engine.services.signature import SignatureService
 
+
 class TestSignature(unittest.TestCase):
-    @patch('core_engine.services.signature.pkcs12.load_key_and_certificates')
-    @patch('os.path.exists')
-    @patch('builtins.open')
-    def test_load_certificate(self, mock_open, mock_exists, mock_load):
-        mock_exists.return_value = True
-        mock_load.return_value = (MagicMock(), MagicMock(), [])
-        
+    def test_service_constructs_without_cert(self):
+        """El servicio se construye sin certificado (modo stub)."""
+        service = SignatureService()
+        self.assertIsNone(service.cert_path)
+        self.assertIsNone(service.cert_pass)
+
+    def test_service_constructs_with_cert_paths(self):
+        """Acepta rutas de certificado para uso posterior (sin cargarlo aún)."""
         service = SignatureService("cert.p12", "pass")
-        self.assertIsNotNone(service.private_key)
-        print("Certificate loaded mock successfully")
+        self.assertEqual(service.cert_path, "cert.p12")
+        self.assertEqual(service.cert_pass, "pass")
+
+    def test_sign_xml_appends_xades_stub_marker(self):
+        """sign_xml produce un digest SHA-256 y lo anota como stub XAdES."""
+        service = SignatureService()
+        xml = b"<Facturae><Invoice/></Facturae>"
+        signed = service.sign_xml(xml)
+
+        # El contenido original se preserva.
+        self.assertTrue(signed.startswith(xml))
+        # Se añade el marcador de stub con un digest hexadecimal.
+        self.assertIn(b"XAdES-STUB:", signed)
+        # El digest tiene 64 chars (SHA-256 hex).
+        marker = signed.split(b"XAdES-STUB:")[1].strip(b" -<>/\n")
+        self.assertEqual(len(marker), 64)
+
 
 if __name__ == '__main__':
     unittest.main()
