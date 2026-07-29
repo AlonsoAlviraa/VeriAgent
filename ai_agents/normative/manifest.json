@@ -1,0 +1,8 @@
+{
+  "name": "verifactu-normative",
+  "version": "0.1.0",
+  "description": "Official AEAT/VeriFactu/Facturae normative chunks for RAG",
+  "provenance_schema": ["source", "retrieved_at", "license", "url"],
+  "empty_collection_contract": "Search must fail closed or return explicit EMPTY_CORPUS when no documents are loaded for the tenant namespace",
+  "documents": 3
+}

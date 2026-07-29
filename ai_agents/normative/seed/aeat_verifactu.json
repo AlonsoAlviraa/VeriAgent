@@ -1,0 +1,43 @@
+{
+  "documents": [
+    {
+      "id": "vf-hash-chain",
+      "title": "Encadenamiento de huellas VeriFactu",
+      "text": "El sistema VeriFactu exige que cada registro de facturación incorpore la huella del registro anterior del mismo emisor, garantizando la integridad de la cadena. La huella se calcula con SHA-256 sobre campos normativos del RegistroAlta.",
+      "source": "AEAT VeriFactu / Reglamento SIF",
+      "topics": ["verifactu", "huella", "encadenamiento"],
+      "provenance": {
+        "source": "AEAT",
+        "retrieved_at": "2026-01-15",
+        "license": "public-official",
+        "url": "https://www.agenciatributaria.es"
+      }
+    },
+    {
+      "id": "vf-qr",
+      "title": "Código QR VeriFactu",
+      "text": "Las facturas VeriFactu deben incluir un código QR que permita validar la factura en los servicios de la Agencia Tributaria. El QR contiene NIF emisor, número, fecha, importe y fragmento de huella.",
+      "source": "AEAT VeriFactu",
+      "topics": ["verifactu", "qr"],
+      "provenance": {
+        "source": "AEAT",
+        "retrieved_at": "2026-01-15",
+        "license": "public-official",
+        "url": "https://www.agenciatributaria.es"
+      }
+    },
+    {
+      "id": "facturae-32",
+      "title": "Facturae 3.2 estructura",
+      "text": "Facturae 3.2.2 define el formato XML de factura electrónica en España con FileHeader, Parties, Invoices, totales e identificación fiscal del emisor y receptor.",
+      "source": "Ministerio / Facturae",
+      "topics": ["facturae", "xml"],
+      "provenance": {
+        "source": "Facturae",
+        "retrieved_at": "2026-01-15",
+        "license": "public-official",
+        "url": "https://www.facturae.gob.es"
+      }
+    }
+  ]
+}

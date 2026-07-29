@@ -26,9 +26,9 @@ def extract_node(state: IngestionState):
             "number": "001",
             "series": "F24", 
             "issue_date": "2024-01-01",
-            "issuer_tax_id": "B123",
+            "issuer_tax_id": "B12345674",
             "customer": {
-                "tax_id": "A123",
+                "tax_id": "A11111119",
                 "name": "Test Client",
                 "address": {"street":"S","city":"C","postal_code":"00","country":"ES"}
             },
