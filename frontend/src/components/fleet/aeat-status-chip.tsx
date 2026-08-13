@@ -2,7 +2,7 @@
 
 import { useLocale } from "@/components/i18n/locale-provider";
 
-/** Honest remittance chip. Never green — this session cannot prove an ACCEPTED CSV. */
+/** Honest chip: fleet ingest never calls AEAT. Never green. */
 export function AeatStatusChip() {
   const { t } = useLocale();
 
