@@ -61,7 +61,7 @@ class SignatureService:
         import os
 
         if not os.path.exists(self.cert_path):
-            logger.debug("[Signature] Certificado no encontrado: %s", self.cert_path)
+            logger.debug("[Signature] Certificado no encontrado")
             return
         try:
             with open(self.cert_path, "rb") as f:
@@ -71,8 +71,8 @@ class SignatureService:
             )
             if self._key is None or self._cert is None:
                 logger.warning("[Signature] PKCS#12 sin clave/cert principal.")
-        except Exception as exc:
-            logger.warning("[Signature] No se pudo cargar el certificado: %s", exc)
+        except Exception:
+            logger.warning("[Signature] No se pudo cargar el certificado")
             self._key = None
             self._cert = None
 

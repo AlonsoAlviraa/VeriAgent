@@ -17,6 +17,8 @@ from core_engine.services.processor import InvoiceProcessor
 from core_engine.exceptions import HashContinuityError
 from core_engine.aeat_connector import send_invoice_to_aeat, InvoiceData
 
+from shared.redact import redact_secret
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,7 +51,7 @@ class CallCoreSigner(BaseTool):
             invoice_hash, invoice_record = InvoiceProcessor.process_and_sign(data)
             
             logger.info(f"[SignerTool] Factura firmada: {data.series}-{data.number}")
-            logger.info(f"[SignerTool] Hash generado: {invoice_hash}")
+            logger.info("[SignerTool] Hash generado: %s", redact_secret(invoice_hash))
             
             # ============================================
             # STEP 2: Check for AEAT Certificates
@@ -66,7 +68,7 @@ class CallCoreSigner(BaseTool):
                 )
             
             if not os.path.exists(cert_path) or not os.path.exists(key_path):
-                logger.warning(f"[SignerTool] Certificate files not found: {cert_path}, {key_path}")
+                logger.warning("[SignerTool] Certificate files not found")
                 return (
                     f"SUCCESS: Factura firmada digitalmente.\n"
                     f"Huella (Hash): {invoice_hash}\n"
