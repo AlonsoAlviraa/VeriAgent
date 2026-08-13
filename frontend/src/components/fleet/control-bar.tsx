@@ -34,6 +34,7 @@ export function ControlBar({
   background202,
   onBackground202Change,
   userId,
+  onOpenShortcuts,
 }: {
   tenant: string;
   onTenantChange: (tenant: string) => void;
@@ -42,11 +43,12 @@ export function ControlBar({
   background202: boolean;
   onBackground202Change: (value: boolean) => void;
   userId?: string;
+  onOpenShortcuts?: () => void;
 }) {
   const { t } = useLocale();
 
   return (
-    <section aria-label={t("control.aria")} className="border-b border-[#e8e6e3]">
+    <section aria-label={t("control.aria")} className="vf-no-print border-b border-[#e8e6e3]">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-4 py-3 md:px-6">
         <div className="vf-chip min-h-11 min-w-0 md:min-h-8">
           <span>{t("control.tenant")}</span>
@@ -107,6 +109,18 @@ export function ControlBar({
             </span>
           </span>
         </label>
+
+        {onOpenShortcuts ? (
+          <button
+            type="button"
+            onClick={onOpenShortcuts}
+            aria-label={t("shortcuts.aria")}
+            className="vf-chip min-h-11 cursor-pointer md:min-h-8"
+          >
+            <kbd className="font-mono text-[12px] text-[#111]">?</kbd>
+            <span className="text-[#111]">{t("shortcuts.open")}</span>
+          </button>
+        ) : null}
       </div>
     </section>
   );

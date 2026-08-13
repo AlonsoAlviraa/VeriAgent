@@ -208,3 +208,38 @@ body {
     transform: none !important;
   }
 }
+
+.vf-print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  .vf-print-only {
+    display: block !important;
+  }
+
+  .vf-fleet-page .vf-app-nav,
+  .vf-fleet-page .vf-app-footer,
+  .vf-no-print {
+    display: none !important;
+  }
+
+  .vf-fleet-page {
+    background: #ffffff !important;
+    color: #111111;
+  }
+
+  .vf-fleet-grid {
+    display: block !important;
+  }
+
+  .vf-card,
+  [data-slot="card"] {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

@@ -15,7 +15,11 @@ cd frontend && npm install && npm run dev
 UI del concurso: http://localhost:3000/fleet  
 
 ```bash
+python -m verifleet ingest --help
 python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json
+python -m verifleet ingest path/to/factura.pdf --tenant enterprise-demo --role issuer
 ```
+
+`python -m verifleet ingest --help` muestra path, `--tenant` y `--role`. Misma ingesta local que `/fleet`. Imprime `SIGNED` y un hash acortado (`first8…last8`). Nunca imprime API keys.
 
 Disclosure y credenciales de juez: `CONTEST.md`

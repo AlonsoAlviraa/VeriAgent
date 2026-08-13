@@ -74,10 +74,12 @@ Open **http://127.0.0.1:3000/fleet** — that is the operator console. Landing (
 Browser `/api/v1` is proxied by `frontend/src/app/api/v1/[...path]/route.ts` (not a `next.config` rewrite). After pulling this, **restart `npm run dev`** so the rewrite is gone, and **recycle uvicorn** so the FIFO + list-drain code loads.
 
 ```bash
+python -m verifleet ingest --help
 python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json
+python -m verifleet ingest path/to/factura.pdf --tenant enterprise-demo --role issuer
 ```
 
-Prints `SIGNED` and a shortened hash (`first8…last8`). Same local ingest as `/fleet`. Never prints API keys.
+`python -m verifleet ingest --help` lists path, `--tenant`, and `--role`. A JSON fixture or PDF runs the same local ingest as `/fleet`. Prints `SIGNED` and a shortened hash (`first8…last8`). Never prints API keys.
 
 This repo does **not** ship a hosted Cloud Run URL. Deploy is a human step (`infra/README.md`) after you have a billed project.
 

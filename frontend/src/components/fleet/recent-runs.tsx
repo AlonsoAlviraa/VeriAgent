@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import { asVerdict } from "./verdict";
 import { shortHash, VerdictPill } from "./verdict-pill";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { downloadTextFile, runsToCsv } from "@/lib/fleet-csv";
+import { Button } from "@/components/ui/button";
 
 export type FleetRunView = {
   run_id: string;
@@ -32,11 +34,27 @@ export function RecentRuns({
   const rows = live && !runs.some((run) => run.run_id === live.run_id) ? [live, ...runs] : runs;
   const visible = rows.slice(0, 12);
 
+  function exportCsv() {
+    downloadTextFile("verifleet-runs.csv", runsToCsv(rows));
+  }
+
   return (
     <section aria-label={t("recent.aria")} className="vf-card overflow-hidden rounded-lg">
-      <header className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8e6e3] px-4 py-3">
         <h2 className="text-[15px] font-medium tracking-tight text-[#111]">{t("recent.title")}</h2>
-        <span className="text-[12px] text-[#6f6e69]">{t("recent.inSession", { n: runs.length })}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-[12px] text-[#6f6e69]">{t("recent.inSession", { n: runs.length })}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={rows.length === 0}
+            onClick={exportCsv}
+            className="h-8 rounded-md border-[#e8e6e3] bg-white px-2.5 text-[12px] text-[#111] hover:bg-[#f4f3f0]"
+          >
+            {t("recent.exportCsv")}
+          </Button>
+        </div>
       </header>
 
       {visible.length === 0 ? (
