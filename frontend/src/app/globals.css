@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #fafaf8;
+  --background: #fbfbf9;
   --foreground: #111111;
   --card: #ffffff;
   --card-foreground: #111111;
@@ -41,7 +41,7 @@
 }
 
 .dark {
-  --background: #fafaf8;
+  --background: #fbfbf9;
   --foreground: #111111;
   --card: #ffffff;
   --card-foreground: #111111;
@@ -124,7 +124,7 @@ html {
 }
 
 body {
-  background: #fafaf8;
+  background: #fbfbf9;
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -132,13 +132,27 @@ body {
 
 .vf-app {
   isolation: isolate;
-  background: #fafaf8;
+  background: #fbfbf9;
 }
 
 .vf-card {
   background: #ffffff;
   border: 1px solid #e8e6e3;
   box-shadow: none;
+}
+
+.vf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #e8e6e3;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 12px;
+  color: #6f6e69;
+  white-space: nowrap;
 }
 
 .vf-label {

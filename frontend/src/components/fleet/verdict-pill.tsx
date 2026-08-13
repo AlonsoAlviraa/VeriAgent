@@ -15,7 +15,7 @@ export function VerdictPill({
     <Badge
       variant="outline"
       className={cn(
-        "relative h-auto rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-normal",
+        "relative h-auto rounded-md border px-2 py-0.5 text-[11px] font-medium tracking-normal",
         s.border,
         s.bg,
         s.text

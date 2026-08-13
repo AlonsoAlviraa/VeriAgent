@@ -20,8 +20,8 @@ export function AppShell({
   const path = usePathname();
 
   return (
-    <div className="vf-app min-h-screen bg-[#fafaf8] text-[#111]">
-      <header className="sticky top-0 z-30 border-b border-[#e8e6e3] bg-[#fafaf8]/90 backdrop-blur-sm">
+    <div className="vf-app min-h-screen bg-[#fbfbf9] text-[#111]">
+      <header className="sticky top-0 z-30 border-b border-[#e8e6e3] bg-[#fbfbf9]/90 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[1120px] items-center gap-4 px-4 py-3 md:px-6">
           <Link href="/fleet" className="shrink-0 text-[15px] font-medium tracking-tight text-[#111]">
             VeriFleet

@@ -256,6 +256,7 @@ export default function FleetPage() {
         onRoleChange={setRole}
         background202={background}
         onBackground202Change={setBackground}
+        userId={identity?.user_id}
       />
 
       <main className="mx-auto w-full max-w-[1120px] px-4 py-6 md:px-6 md:py-8">

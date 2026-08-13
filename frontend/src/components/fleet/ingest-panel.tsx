@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FileText, Layers, UploadCloud } from "lucide-react";
+import { Layers, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,7 @@ export function IngestPanel({
   };
 
   return (
-    <section aria-label="Invoice ingest" className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_minmax(0,220px)]">
+    <section aria-label="Invoice ingest" className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_minmax(0,200px)]">
       <div
         role="button"
         tabIndex={0}
@@ -49,31 +49,17 @@ export function IngestPanel({
           dispatchPdf("valid_invoice.pdf");
         }}
         className={cn(
-          "flex min-h-[88px] cursor-pointer items-center gap-3 rounded-lg border border-dashed px-4 py-4 outline-none transition-colors duration-150 focus-visible:border-[#18794e]",
+          "flex min-h-[120px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center outline-none transition-colors duration-150 focus-visible:border-[#18794e]",
           dragging || uploading
             ? "border-[#18794e] bg-[#eef8f1]"
-            : "border-[#e8e6e3] bg-white hover:border-[#cfcbc4]"
+            : "border-[#e8e6e3] bg-[#f4f3f0] hover:border-[#cfcbc4]"
         )}
       >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-[#e8e6e3] bg-[#fafaf8]">
-          {fileName || uploading ? (
-            <FileText className="size-4 text-[#18794e]" />
-          ) : (
-            <UploadCloud className="size-4 text-[#6f6e69]" />
-          )}
+        <UploadCloud className="size-5 text-[#6f6e69]" />
+        <span className="text-[14px] font-medium text-[#111]">
+          {uploading ? "Uploading valid_invoice.pdf…" : fileName || "Drop a valid invoice PDF"}
         </span>
-        <span className="min-w-0">
-          <span className="block text-[14px] font-medium text-[#111]">
-            Valid invoice PDF
-          </span>
-          <span className="mt-0.5 block truncate text-[12px] text-[#6f6e69]">
-            {uploading
-              ? "Uploading valid_invoice.pdf…"
-              : fileName
-                ? fileName
-                : "Drop a file or click to browse"}
-          </span>
-        </span>
+        <span className="text-[12px] text-[#6f6e69]">or click to browse</span>
         <input
           ref={inputRef}
           type="file"
@@ -89,10 +75,10 @@ export function IngestPanel({
       <Button
         onClick={onSweep}
         disabled={busy}
-        className="h-auto min-h-[88px] w-full justify-center gap-2 rounded-lg bg-[#111] py-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#18794e] disabled:opacity-50"
+        className="h-auto min-h-[120px] w-full justify-center gap-2 rounded-lg bg-[#111] py-4 text-[12px] font-medium tracking-[0.12em] text-white uppercase transition-colors duration-150 hover:bg-emerald-400 hover:text-[#04180f] disabled:opacity-50"
       >
         <Layers data-icon="inline-start" aria-hidden />
-        {sweeping ? "Sweep running…" : "Run 3-invoice sweep"}
+        {sweeping ? "Sweep running…" : "3-invoice sweep"}
       </Button>
     </section>
   );

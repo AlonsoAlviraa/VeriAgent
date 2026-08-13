@@ -14,6 +14,11 @@ export type FleetRunView = {
   pubsub?: { published?: boolean; topic?: string; reason?: string };
 };
 
+function shortId(id: string) {
+  if (id.length <= 18) return id;
+  return `${id.slice(0, 8)}…${id.slice(-4)}`;
+}
+
 export function RecentRuns({
   runs,
   live,
@@ -48,40 +53,35 @@ export function RecentRuns({
             const queued = run.status === "QUEUED" || run.status === "RUNNING";
             const justCompleted = !queued && completedIds.includes(run.run_id);
             return (
-              <li
-                key={run.run_id}
-                className="relative flex items-start gap-3 overflow-hidden px-4 py-3"
-              >
+              <li key={run.run_id} className="relative overflow-hidden px-4 py-3">
                 {queued && (
                   <span className="pointer-events-none absolute inset-0" aria-hidden="true">
                     <span className="vf-scan-bar absolute inset-y-0 left-0 w-1/4 bg-emerald-400/20" />
                   </span>
                 )}
-                <div className="relative min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="min-w-0 truncate text-[13px] font-medium text-[#111]">
-                      {run.reason}
-                    </span>
-                    {queued ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#e8e6e3] bg-[#f4f3f0] px-2 py-0.5 text-[11px] text-[#6f6e69]">
-                        <Loader2 className="size-3 animate-spin" aria-hidden />
-                        {run.status === "QUEUED" ? "queued" : run.status.toLowerCase()}
-                      </span>
-                    ) : (
-                      <VerdictPill verdict={asVerdict(run.decision)} glow={justCompleted} />
-                    )}
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-mono text-[13px] font-medium text-[#111]">
+                      {shortId(run.run_id)}
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[12px] text-[#6f6e69]">
+                      {run.invoice_hash ? (
+                        <HashReveal hash={run.invoice_hash} animate={justCompleted} />
+                      ) : (
+                        <span>{queued ? "awaiting hash" : "no hash"}</span>
+                      )}
+                      <span aria-hidden>·</span>
+                      <span className="truncate">{run.reason}</span>
+                    </p>
                   </div>
-                  <p className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[12px] text-[#6f6e69]">
-                    {run.invoice_hash ? (
-                      <HashReveal hash={run.invoice_hash} animate={justCompleted} />
-                    ) : (
-                      <span>{queued ? "awaiting tool hash" : "no hash written"}</span>
-                    )}
-                    <span aria-hidden>·</span>
-                    <span>
-                      {run.armor?.allowed === false ? "armor blocked" : queued ? run.status.toLowerCase() : "armor clean"}
+                  {queued ? (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[#e8e6e3] bg-[#f4f3f0] px-2 py-0.5 text-[11px] text-[#6f6e69]">
+                      <Loader2 className="size-3 animate-spin" aria-hidden />
+                      {run.status === "QUEUED" ? "queued" : run.status.toLowerCase()}
                     </span>
-                  </p>
+                  ) : (
+                    <VerdictPill verdict={asVerdict(run.decision)} glow={justCompleted} />
+                  )}
                 </div>
               </li>
             );

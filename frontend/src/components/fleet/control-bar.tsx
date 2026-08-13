@@ -1,4 +1,3 @@
-import { Building2, ShieldCheck } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,9 @@ const ROLES = [
   { label: "admin", value: "admin" },
 ];
 
+const chipSelect =
+  "h-auto min-h-0 w-auto min-w-0 border-0 bg-transparent p-0 text-[12px] text-[#111] shadow-none ring-0 focus-visible:ring-0 data-[size=default]:h-auto";
+
 export function ControlBar({
   tenant,
   onTenantChange,
@@ -27,6 +29,7 @@ export function ControlBar({
   onRoleChange,
   background202,
   onBackground202Change,
+  userId,
 }: {
   tenant: string;
   onTenantChange: (tenant: string) => void;
@@ -34,76 +37,65 @@ export function ControlBar({
   onRoleChange: (role: string) => void;
   background202: boolean;
   onBackground202Change: (value: boolean) => void;
+  userId?: string;
 }) {
   return (
-    <section aria-label="Console controls" className="border-b border-[#e8e6e3] bg-white">
-      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-4 px-4 py-4 md:flex-row md:items-end md:gap-6 md:px-6">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:contents">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor="tenant" className="vf-label flex items-center gap-1.5">
-              <Building2 className="size-3" aria-hidden />
-              Tenant
-            </label>
-            <Select items={TENANTS} value={tenant} onValueChange={(value) => onTenantChange(String(value))}>
-              <SelectTrigger
-                id="tenant"
-                size="default"
-                className="h-10 w-full min-w-0 rounded-lg border-[#e8e6e3] bg-white text-[13px] md:h-8 md:w-[200px]"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="border-[#e8e6e3] bg-white text-[13px]">
-                <SelectGroup>
-                  {TENANTS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor="role" className="vf-label flex items-center gap-1.5">
-              <ShieldCheck className="size-3" aria-hidden />
-              Role
-            </label>
-            <Select items={ROLES} value={role} onValueChange={(value) => onRoleChange(String(value))}>
-              <SelectTrigger
-                id="role"
-                size="default"
-                className="h-10 w-full min-w-0 rounded-lg border-[#e8e6e3] bg-white text-[13px] md:h-8 md:w-[160px]"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="border-[#e8e6e3] bg-white text-[13px]">
-                <SelectGroup>
-                  {ROLES.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+    <section aria-label="Console controls" className="border-b border-[#e8e6e3]">
+      <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-4 py-3 md:px-6">
+        <div className="vf-chip min-h-11 min-w-0 md:min-h-8">
+          <span>Tenant</span>
+          <Select items={TENANTS} value={tenant} onValueChange={(value) => onTenantChange(String(value))}>
+            <SelectTrigger id="tenant" size="default" className={chipSelect}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-[#e8e6e3] bg-white text-[13px]">
+              <SelectGroup>
+                {TENANTS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
+
+        <div className="vf-chip min-h-11 min-w-0 md:min-h-8">
+          <span>Role</span>
+          <Select items={ROLES} value={role} onValueChange={(value) => onRoleChange(String(value))}>
+            <SelectTrigger id="role" size="default" className={chipSelect}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-[#e8e6e3] bg-white text-[13px]">
+              <SelectGroup>
+                {ROLES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <span className="vf-chip min-h-11 md:min-h-8">
+          {userId || "judge"}
+        </span>
 
         <label
           htmlFor="background-202"
-          className="flex min-h-11 items-center gap-3 rounded-lg border border-[#e8e6e3] bg-[#fafaf8] px-3 py-2 md:ml-auto md:min-h-0 md:border-0 md:bg-transparent md:px-0 md:py-0"
+          className="vf-chip min-h-11 cursor-pointer gap-2 md:ml-auto md:min-h-8"
         >
           <Switch
             id="background-202"
-            size="default"
+            size="sm"
             checked={background202}
             onCheckedChange={onBackground202Change}
           />
-          <span className="text-[13px] text-[#111]">
+          <span className="text-[#111]">
             Background 202
-            <span className="ml-2 text-[#6f6e69]">
-              {background202 ? "accept, then settle" : "wait inline"}
+            <span className="ml-1 text-[#6f6e69]">
+              {background202 ? "accept" : "inline"}
             </span>
           </span>
         </label>
