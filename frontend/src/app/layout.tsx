@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · VeriFleet",
   },
   description:
-    "Autonomous fiscal-compliance fleet for Spanish VeriFactu. Gemini 3.5 + Google ADK. The LLM never writes the hash.",
+    "VeriFactu fleet. Consult is tighten-only. Tools write the hash. The LLM never writes the hash.",
   icons: { icon: "/favicon.ico" },
 };
 

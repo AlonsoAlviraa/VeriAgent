@@ -159,12 +159,12 @@ body {
   white-space: nowrap;
 }
 
-.vf-label {
-  font-size: 11px;
+.vf-prose-hero {
+  font-size: clamp(28px, 7vw, 44px);
+  line-height: 1.12;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6f6e69;
+  letter-spacing: -0.035em;
+  color: #111111;
 }
 
 .vf-enter {

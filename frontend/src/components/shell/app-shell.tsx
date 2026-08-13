@@ -6,18 +6,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { LocaleToggle } from "@/components/i18n/locale-toggle";
+import { Button } from "@/components/ui/button";
 import type { MessageKey } from "@/lib/i18n";
 
-const PRIMARY: { href: string; key: MessageKey }[] = [
-  { href: "/fleet", key: "nav.fleet" },
-  { href: "/", key: "nav.audit" },
-  { href: "/history", key: "nav.ledger" },
+const LINKS: { href: string; key: MessageKey }[] = [
+  { href: "/", key: "nav.product" },
+  { href: "/pricing", key: "nav.pricing" },
+  { href: "/security", key: "nav.security" },
+  { href: "/tutorial", key: "nav.tutorial" },
 ];
 
-const SECONDARY: { href: string; key: MessageKey }[] = [
-  { href: "/tutorial", key: "nav.tutorial" },
-  { href: "/security", key: "nav.security" },
-  { href: "/pricing", key: "nav.pricing" },
+const MORE_EXTRA: { href: string; key: MessageKey }[] = [
+  { href: "/history", key: "nav.ledger" },
 ];
 
 function isActive(path: string, href: string) {
@@ -53,7 +53,9 @@ function MoreNav({ path }: { path: string }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
-  const anyActive = SECONDARY.some((item) => isActive(path, item.href));
+  const collapsed = LINKS.slice(1);
+  const items = [...collapsed, ...MORE_EXTRA];
+  const anyActive = items.some((item) => isActive(path, item.href));
 
   useEffect(() => {
     setOpen(false);
@@ -98,7 +100,7 @@ function MoreNav({ path }: { path: string }) {
           role="menu"
           className="absolute left-0 top-[calc(100%+6px)] z-40 min-w-[168px] rounded-lg border border-[#e8e6e3] bg-white p-1 shadow-[0_8px_24px_rgba(17,17,17,0.06)]"
         >
-          {SECONDARY.map((item) => {
+          {items.map((item) => {
             const active = isActive(path, item.href);
             return (
               <Link
@@ -129,6 +131,7 @@ export function AppShell({
 }) {
   const path = usePathname();
   const { t } = useLocale();
+  const footerLinks = [...LINKS, { href: "/fleet", key: "nav.console" as const }, ...MORE_EXTRA];
 
   return (
     <div
@@ -140,22 +143,15 @@ export function AppShell({
         style={{ backgroundColor: "#fbfbf9" }}
       >
         <div className="mx-auto flex w-full max-w-[1120px] items-center gap-2 px-4 py-3 md:gap-4 md:px-6">
-          <Link href="/fleet" className="shrink-0 text-[15px] font-medium tracking-tight text-[#111]">
+          <Link href="/" className="shrink-0 text-[15px] font-medium tracking-tight text-[#111]">
             VeriFleet
           </Link>
 
           <nav aria-label={t("nav.aria")} className="flex min-w-0 items-center gap-1 overflow-x-auto">
-            {PRIMARY.map((item) => (
-              <NavLink
-                key={item.href}
-                href={item.href}
-                label={t(item.key)}
-                active={isActive(path, item.href)}
-              />
-            ))}
+            <NavLink href="/" label={t("nav.product")} active={isActive(path, "/")} />
             <MoreNav path={path} />
             <div className="hidden items-center gap-1 sm:flex">
-              {SECONDARY.map((item) => (
+              {LINKS.slice(1).map((item) => (
                 <NavLink
                   key={item.href}
                   href={item.href}
@@ -168,18 +164,37 @@ export function AppShell({
 
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <LocaleToggle />
-            <p className="hidden truncate text-[12px] text-[#6f6e69] sm:block">
-              {t("nav.judgeConsole")}
-            </p>
+            <Button
+              render={<Link href="/fleet" />}
+              nativeButton={false}
+              variant="outline"
+              className={cn(
+                "h-8 rounded-md border-[#111] bg-[#111] px-2.5 text-[13px] text-white hover:bg-[#222] hover:text-white",
+                isActive(path, "/fleet") && "shadow-[0_0_0_1px_#111]"
+              )}
+            >
+              {t("nav.console")}
+            </Button>
           </div>
         </div>
         {right ? <div className="mx-auto hidden max-w-[1120px] px-4 pb-3 md:block md:px-6">{right}</div> : null}
       </header>
       {children}
-      <footer className="border-t border-[#e8e6e3] px-4 py-5 md:px-6">
-        <p className="mx-auto w-full max-w-[1120px] text-[12px] leading-relaxed text-[#6f6e69]">
-          {t("footer.identity")}
-        </p>
+      <footer className="border-t border-[#e8e6e3] px-4 py-6 md:px-6">
+        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-4">
+          <nav aria-label={t("nav.aria")} className="flex flex-wrap gap-x-4 gap-y-2">
+            {footerLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-[13px] text-[#6f6e69] hover:text-[#111]"
+              >
+                {t(item.key)}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-[12px] leading-relaxed text-[#6f6e69]">{t("footer.identity")}</p>
+        </div>
       </footer>
     </div>
   );

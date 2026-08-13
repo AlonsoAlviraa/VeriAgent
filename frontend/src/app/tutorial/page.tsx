@@ -44,13 +44,11 @@ export default function TutorialPage() {
 
   return (
     <AppShell>
-      <main className="mx-auto flex w-full max-w-[720px] flex-col gap-5 px-4 py-8 md:px-6">
+      <main className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 py-10 md:px-6 md:py-14">
         <header>
           <p className="vf-label">{t("tutorial.kicker")}</p>
-          <h1 className="mt-2 text-[28px] font-medium tracking-[-0.03em] text-[#111]">
-            {t("tutorial.title")}
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-[#6f6e69]">{t("tutorial.lead")}</p>
+          <h1 className="vf-prose-hero mt-3 text-[32px] md:text-[40px]">{t("tutorial.title")}</h1>
+          <p className="mt-4 text-[16px] leading-relaxed text-[#6f6e69]">{t("tutorial.lead")}</p>
         </header>
 
         <aside className="vf-card rounded-lg border-[#e8e6e3] bg-white p-4">

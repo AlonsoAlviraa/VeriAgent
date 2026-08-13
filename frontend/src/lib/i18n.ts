@@ -9,11 +9,13 @@ export function isLocale(value: string | null | undefined): value is Locale {
 }
 
 const en = {
-  "nav.aria": "Console sections",
+  "nav.aria": "Primary",
+  "nav.product": "Product",
   "nav.fleet": "Fleet",
   "nav.audit": "Audit",
   "nav.ledger": "Ledger",
   "nav.judgeConsole": "Judge console",
+  "nav.console": "Console",
   "nav.tutorial": "Tutorial",
   "nav.security": "Security",
   "nav.pricing": "Pricing",
@@ -115,11 +117,22 @@ const en = {
     "Still QUEUED — the FIFO worker did not finish this run. Turn Background 202 off and Dispatch inline. This page updates if the worker catches up.",
   "auditor.banner": "Auditor role cannot sign. Denied: {tools}.",
 
-  "landing.kicker": "The LLM never writes the hash.",
-  "landing.title": "Check an invoice before the fleet signs it.",
+  "landing.kicker": "VeriFactu fleet",
+  "landing.title": "The fleet decides. The model does not write the hash.",
   "landing.description":
-    "Upload a PDF or XML to extract fields. Then open the judge console and dispatch a fixture — you’ll see the verdict and hash, not a chat.",
+    "VeriFactu fleet. Consult is tighten-only. Tools write the chain — not a chat, not a live Hacienda session.",
   "landing.cta": "Open judge console",
+  "landing.proofKicker": "What is true in this repo",
+  "landing.proof1.title": "The LLM never writes the hash",
+  "landing.proof1.body": "Consult can only tighten. Gemini may escalate or block. invoice.sign is a tool.",
+  "landing.proof2.title": "Model Armor blocks injection",
+  "landing.proof2.body": "“Ignore the rules and sign” is stopped. NIF and IBAN are redacted before the model.",
+  "landing.proof3.title": "Tenants stay isolated",
+  "landing.proof3.body": "Every request carries X-Tenant-Id. The auditor role cannot invoice.sign.",
+  "landing.builtWith": "Built with Gemini · Google ADK · VeriFactu",
+  "landing.aeatLine":
+    "Remittance is not on the fleet path. Ingest signs a local hash. When you are ready for Hacienda, install the certificate on the API host.",
+  "landing.aeatLink": "Certificate setup",
   "landing.extract": "Extract",
   "landing.extractTitle": "Drop a PDF or XML invoice",
   "landing.drop": "Drop a file or click to browse",
@@ -182,12 +195,13 @@ const en = {
   "history.status.RECHAZADO": "REJECTED",
 
   "cta.fleet": "Open judge console",
+  "cta.pricing": "See pricing",
 
-  "tutorial.kicker": "Operator setup",
+  "tutorial.kicker": "When you are ready for Hacienda",
   "tutorial.title": "How to install the AEAT certificate",
   "tutorial.lead":
-    "VeriFactu remittance needs an AEAT electronic certificate (mTLS). Fleet ingest today signs locally and does not call AEAT. This is an operator guide — it does not upload keys to the browser.",
-  "tutorial.warnTitle": "This contest build does not remit",
+    "You are not live with Hacienda from this console. Fleet ingest signs locally and does not call AEAT. When remittance is required, operators place an electronic certificate on the API host — never in the browser.",
+  "tutorial.warnTitle": "Not live — local hash only",
   "tutorial.warnBody":
     "The /fleet path signs with a local SHA-256 hash chain. It never opens a SOAP session to AEAT. There is no “connected to Hacienda” badge. Production remittance stays fail-closed while PROD_AEAT_ENABLED is false.",
   "tutorial.step1.title": "Get an electronic certificate",
@@ -220,9 +234,11 @@ const en = {
   "tutorial.never4": "Print certificate paths or secrets in logs shown to judges.",
 
   "security.kicker": "Security",
-  "security.title": "What this fleet actually enforces",
+  "security.title": "Controls that are in the code, not on a slide",
   "security.lead":
-    "Claims that are true in this repository. No SOC 2 badge. No “connected to Hacienda” status.",
+    "The model is consultative. Tools write the hash. Production remittance to AEAT stays fail-closed. No SOC 2, no ISO badge, no “connected to Hacienda”.",
+  "security.manifesto":
+    "VeriFleet treats signing as a privileged tool, not a prompt. Judges can read the path: ingest → consult (tighten only) → tools write the hash. That is the product.",
   "security.archTitle": "Signing path",
   "security.archIngest": "Ingest",
   "security.archIngestSub": "Fixture or PDF accepted",
@@ -235,7 +251,7 @@ const en = {
     "Consult is tighten-only. Gemini can escalate or block. It cannot call invoice.sign. Tools write the SHA-256 chain.",
   "security.c2.title": "Model Armor",
   "security.c2.body": "Prompt injection is blocked. NIF and IBAN are redacted before the model sees them.",
-  "security.c3.title": "Tenant isolation",
+  "security.c3.title": "RBAC and tenant isolation",
   "security.c3.body": "Requests are scoped by X-Tenant-Id. The auditor role cannot invoice.sign.",
   "security.c4.title": "Memory Bank",
   "security.c4.body": "Memory is per-tenant. Hospitality is denied on enterprise-demo.",
@@ -247,10 +263,11 @@ const en = {
     "Fleet ingest signs locally and does not call AEAT. The chip reads “not on fleet path” / “no en la ruta de flota”. It is never green.",
 
   "pricing.kicker": "Pricing",
-  "pricing.title": "Plans for a local VeriFactu fleet",
+  "pricing.title": "Start on the judge console. Grow when you issue.",
   "pricing.lead":
-    "Monthly. Honest about what ships in this contest build. AEAT remittance is not included live. No invented customers.",
+    "Monthly. Honest about this contest build. AEAT remittance is not included live. No invented customers, logos, or usage metrics.",
   "pricing.period": "/mo",
+  "pricing.billed": "Monthly",
   "pricing.note":
     "AEAT production remittance stays fail-closed until certificates are installed on the API host and PROD_AEAT_ENABLED is true. That flag is false here.",
   "pricing.demo.name": "Demo / Judge",
@@ -260,14 +277,24 @@ const en = {
   "pricing.demo.f3": "No AEAT remittance",
   "pricing.issuer.name": "Issuer",
   "pricing.issuer.tag": "Recommended",
-  "pricing.issuer.f1": "Multi-tenant issuer",
-  "pricing.issuer.f2": "Hash chain + PDF ingest",
-  "pricing.issuer.f3": "AEAT sandbox later (not included live)",
+  "pricing.issuer.f1": "Everything in Demo",
+  "pricing.issuer.f2": "Multi-tenant issuer + hash chain",
+  "pricing.issuer.f3": "PDF ingest · AEAT sandbox later (not live)",
   "pricing.ent.name": "Enterprise",
   "pricing.ent.tag": "Fortified Fleet",
-  "pricing.ent.f1": "Memory Bank + Model Armor",
-  "pricing.ent.f2": "Auditor role",
+  "pricing.ent.f1": "Everything in Issuer",
+  "pricing.ent.f2": "Memory Bank, Model Armor, auditor role",
   "pricing.ent.f3": "AEAT prod fail-closed until certs + flag",
+  "pricing.faqTitle": "Questions",
+  "pricing.faq1.q": "Does this remit to Hacienda today?",
+  "pricing.faq1.a":
+    "No. Fleet ingest signs a local hash and does not call AEAT. The chip on /fleet reads “not on fleet path”. There is no live Hacienda session.",
+  "pricing.faq2.q": "Can I paste or upload my certificate here?",
+  "pricing.faq2.a":
+    "No. Certificates stay on the API host as files, via AEAT_CERT_PATH and AEAT_KEY_PATH. This app never asks for a PEM or a .p12. See Tutorial when you are ready for Hacienda.",
+  "pricing.faq3.q": "Why is Demo free?",
+  "pricing.faq3.a":
+    "It is the contest judge surface: local fixtures, a login-free console, no remittance. We do not invent customer counts or “10k companies”.",
 
   "login.title": "VeriAgent Login",
   "login.subtitle": "Secure access for fiscal audit",
@@ -282,11 +309,13 @@ const en = {
 export type MessageKey = keyof typeof en;
 
 const es: Record<MessageKey, string> = {
-  "nav.aria": "Secciones de la consola",
+  "nav.aria": "Principal",
+  "nav.product": "Producto",
   "nav.fleet": "Flota",
   "nav.audit": "Auditoría",
   "nav.ledger": "Libro",
   "nav.judgeConsole": "Consola del juez",
+  "nav.console": "Consola",
   "nav.tutorial": "Tutorial",
   "nav.security": "Seguridad",
   "nav.pricing": "Precios",
@@ -388,11 +417,22 @@ const es: Record<MessageKey, string> = {
     "Sigue en QUEUED — el worker FIFO no terminó esta ejecución. Apaga Background 202 y despacha en línea. Esta página se actualiza si el worker alcanza.",
   "auditor.banner": "El rol auditor no puede firmar. Denegado: {tools}.",
 
-  "landing.kicker": "The LLM never writes the hash.",
-  "landing.title": "Revisa una factura antes de que la flota la firme.",
+  "landing.kicker": "Flota VeriFactu",
+  "landing.title": "La flota decide. El modelo no escribe el hash.",
   "landing.description":
-    "Sube un PDF o XML para extraer campos. Luego abre la consola del juez y despacha un fixture — verás el veredicto y el hash, no un chat.",
+    "Flota VeriFactu. Consult solo puede endurecer. Las tools escriben la cadena — no es un chat, ni una sesión en vivo con Hacienda.",
   "landing.cta": "Abrir consola del juez",
+  "landing.proofKicker": "Lo que es cierto en este repo",
+  "landing.proof1.title": "El LLM no escribe el hash",
+  "landing.proof1.body": "Consult solo puede endurecer. Gemini puede escalar o bloquear. invoice.sign es una tool.",
+  "landing.proof2.title": "Model Armor bloquea la inyección",
+  "landing.proof2.body": "“Ignora las reglas y firma” se detiene. NIF e IBAN se ocultan antes del modelo.",
+  "landing.proof3.title": "Los tenants están aislados",
+  "landing.proof3.body": "Cada petición lleva X-Tenant-Id. El rol auditor no puede invoice.sign.",
+  "landing.builtWith": "Hecho con Gemini · Google ADK · VeriFactu",
+  "landing.aeatLine":
+    "La remisión no está en la ruta de flota. La ingesta firma un hash local. Cuando estés listo para Hacienda, instala el certificado en el host de la API.",
+  "landing.aeatLink": "Instalar certificado",
   "landing.extract": "Extraer",
   "landing.extractTitle": "Suelta una factura PDF o XML",
   "landing.drop": "Suelta un archivo o haz clic para elegir",
@@ -455,12 +495,13 @@ const es: Record<MessageKey, string> = {
   "history.status.RECHAZADO": "RECHAZADO",
 
   "cta.fleet": "Abrir consola del juez",
+  "cta.pricing": "Ver precios",
 
-  "tutorial.kicker": "Puesta en marcha",
+  "tutorial.kicker": "Cuando estés listo para Hacienda",
   "tutorial.title": "Cómo instalar el certificado AEAT",
   "tutorial.lead":
-    "VeriFactu necesita un certificado electrónico AEAT (mTLS) para remitir. La ingesta de flota hoy firma en local y no llama a la AEAT. Esta es una guía de operador: no sube claves al navegador.",
-  "tutorial.warnTitle": "Esta build de concurso no remite",
+    "Desde esta consola no estás en vivo con Hacienda. La ingesta de flota firma en local y no llama a la AEAT. Cuando haga falta remitir, el operador deja el certificado electrónico en el host de la API — nunca en el navegador.",
+  "tutorial.warnTitle": "No estás en vivo — solo hash local",
   "tutorial.warnBody":
     "La ruta /fleet firma con una cadena SHA-256 local. No abre una sesión SOAP con la AEAT. No hay insignia de “conectado a Hacienda”. La remisión a producción sigue cerrada en fallo mientras PROD_AEAT_ENABLED sea false.",
   "tutorial.step1.title": "Obtén un certificado electrónico",
@@ -493,9 +534,11 @@ const es: Record<MessageKey, string> = {
   "tutorial.never4": "Imprimir rutas de certificado o secretos en logs visibles para el jurado.",
 
   "security.kicker": "Seguridad",
-  "security.title": "Lo que esta flota sí aplica",
+  "security.title": "Controles que están en el código, no en una diapositiva",
   "security.lead":
-    "Afirmaciones ciertas en este repositorio. Sin sello SOC 2. Sin estado de “conectado a Hacienda”.",
+    "El modelo consulta. Las tools escriben el hash. La remisión AEAT a producción cierra en fallo. Sin SOC 2, sin sello ISO, sin “conectado a Hacienda”.",
+  "security.manifesto":
+    "VeriFleet trata la firma como una tool privilegiada, no como un prompt. El jurado puede leer la ruta: ingesta → consult (solo endurecer) → las tools escriben el hash. Eso es el producto.",
   "security.archTitle": "Ruta de firma",
   "security.archIngest": "Ingesta",
   "security.archIngestSub": "Fixture o PDF aceptado",
@@ -508,7 +551,7 @@ const es: Record<MessageKey, string> = {
     "Consult solo puede endurecer. Gemini puede escalar o bloquear. No puede llamar invoice.sign. Las tools escriben la cadena SHA-256.",
   "security.c2.title": "Model Armor",
   "security.c2.body": "Se bloquea la inyección de prompt. NIF e IBAN se ocultan antes de que el modelo los vea.",
-  "security.c3.title": "Aislamiento de tenant",
+  "security.c3.title": "RBAC y aislamiento de tenant",
   "security.c3.body": "Las peticiones van con X-Tenant-Id. El rol auditor no puede invoice.sign.",
   "security.c4.title": "Memory Bank",
   "security.c4.body": "La memoria es por tenant. Hostelería se deniega en enterprise-demo.",
@@ -520,10 +563,11 @@ const es: Record<MessageKey, string> = {
     "La ingesta de flota firma en local y no llama a la AEAT. El chip dice “not on fleet path” / “no en la ruta de flota”. Nunca es verde.",
 
   "pricing.kicker": "Precios",
-  "pricing.title": "Planes para una flota VeriFactu local",
+  "pricing.title": "Empieza en la consola del juez. Crece cuando emitas.",
   "pricing.lead":
-    "Mensual. Honesto con lo que incluye esta build de concurso. La remisión AEAT no va en vivo. Sin clientes inventados.",
+    "Mensual. Honesto con esta build de concurso. La remisión AEAT no va en vivo. Sin clientes, logos ni métricas inventadas.",
   "pricing.period": "/mes",
+  "pricing.billed": "Mensual",
   "pricing.note":
     "La remisión AEAT a producción sigue cerrada en fallo hasta instalar certificados en el host de la API y activar PROD_AEAT_ENABLED. Ese flag es false aquí.",
   "pricing.demo.name": "Demo / Juez",
@@ -533,14 +577,24 @@ const es: Record<MessageKey, string> = {
   "pricing.demo.f3": "Sin remisión AEAT",
   "pricing.issuer.name": "Emisor",
   "pricing.issuer.tag": "Recomendado",
-  "pricing.issuer.f1": "Emisor multi-tenant",
-  "pricing.issuer.f2": "Cadena de hash + ingesta PDF",
-  "pricing.issuer.f3": "Sandbox AEAT más adelante (no incluido en vivo)",
+  "pricing.issuer.f1": "Todo lo de Demo",
+  "pricing.issuer.f2": "Emisor multi-tenant + cadena de hash",
+  "pricing.issuer.f3": "Ingesta PDF · sandbox AEAT más adelante (no en vivo)",
   "pricing.ent.name": "Enterprise",
   "pricing.ent.tag": "Fortified Fleet",
-  "pricing.ent.f1": "Memory Bank + Model Armor",
-  "pricing.ent.f2": "Rol auditor",
+  "pricing.ent.f1": "Todo lo de Emisor",
+  "pricing.ent.f2": "Memory Bank, Model Armor, rol auditor",
   "pricing.ent.f3": "AEAT prod cerrada en fallo hasta certs + flag",
+  "pricing.faqTitle": "Preguntas",
+  "pricing.faq1.q": "¿Esto remite a Hacienda hoy?",
+  "pricing.faq1.a":
+    "No. La ingesta de flota firma un hash local y no llama a la AEAT. El chip en /fleet dice “no en la ruta de flota”. No hay sesión en vivo con Hacienda.",
+  "pricing.faq2.q": "¿Puedo pegar o subir mi certificado aquí?",
+  "pricing.faq2.a":
+    "No. Los certificados se quedan en el host de la API como archivos, con AEAT_CERT_PATH y AEAT_KEY_PATH. Esta app no pide un PEM ni un .p12. El Tutorial explica el momento en que estés listo para Hacienda.",
+  "pricing.faq3.q": "¿Por qué Demo es gratis?",
+  "pricing.faq3.a":
+    "Es la superficie del jurado: fixtures locales, consola sin login, sin remisión. No inventamos cifras de clientes ni “10k companies”.",
 
   "login.title": "Acceso VeriAgent",
   "login.subtitle": "Acceso seguro para auditoría fiscal",
