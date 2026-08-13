@@ -7,6 +7,7 @@ import os
 from .agents import adk_status
 from .config import GCP_SERVICES, GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK
 from .pubsub import topic_name
+from core_engine.aeat_connector import is_aeat_remitting
 
 
 def checklist() -> dict:
@@ -85,6 +86,7 @@ def checklist() -> dict:
             },
         ],
         "llm_live": not _skip_llm(),
+        "aeat_remitting": is_aeat_remitting(),
         "pubsub_topic": topic_name() or None,
         "project": os.getenv("GOOGLE_CLOUD_PROJECT") or None,
     }

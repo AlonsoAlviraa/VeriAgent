@@ -88,7 +88,7 @@ export default function AuditPage() {
             ? "loading"
             : "pending";
       case "AEAT":
-        return status === InvoiceStatus.SENT_OK ? "done" : status === InvoiceStatus.SIGNED ? "loading" : "pending";
+        return "pending";
       default:
         return "pending";
     }
@@ -175,8 +175,9 @@ export default function AuditPage() {
               <Step label={t("landing.stepOcr")} sub={t("landing.stepOcrSub")} status={getStepStatus("OCR")} />
               <Step label={t("landing.stepValid")} sub={t("landing.stepValidSub")} status={getStepStatus("VALIDATION")} />
               <Step label={t("landing.stepHash")} sub={t("landing.stepHashSub")} status={getStepStatus("SIGNING")} />
-              <Step label={t("landing.stepAeat")} status={getStepStatus("AEAT")} />
+              <Step label={t("landing.stepAeat")} sub={t("landing.stepAeatSub")} status="pending" />
             </div>
+            <p className="mt-4 text-[12px] leading-relaxed text-[#6f6e69]">{t("landing.aeatQuiet")}</p>
           </section>
 
           <section

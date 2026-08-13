@@ -619,6 +619,7 @@ def test_health_stage_one_strings():
     assert body["framework"] == "google-adk"
     assert body["runner"] == "InMemoryRunner"
     assert body["track"] == "Fortified Enterprise Fleet"
+    assert body["aeat_remitting"] is False
 
 
 def test_compliance_includes_runner():
@@ -627,6 +628,7 @@ def test_compliance_includes_runner():
     ids = {i["id"] for i in checklist()["items"]}
     assert "runner" in ids
     assert checklist()["framework"] == "google-adk"
+    assert checklist()["aeat_remitting"] is False
 
 
 def test_fleet_api_ingest_and_get(db_session):

@@ -39,6 +39,7 @@ def test_health_check():
     assert body["status"] == "ok"
     assert body["service"] == "core_engine"
     assert "version" in body  # el endpoint expone la versión desde 0.3.0
+    assert body.get("aeat_remitting") is False
 
 
 def test_upload_pdf_file():

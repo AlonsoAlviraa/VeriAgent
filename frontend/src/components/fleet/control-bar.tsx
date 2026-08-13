@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { AeatStatusChip } from "./aeat-status-chip";
 
 const TENANTS = [
   { label: "enterprise-demo", value: "enterprise-demo" },
@@ -86,6 +87,8 @@ export function ControlBar({
         <span className="vf-chip min-h-11 md:min-h-8">
           {userId || "judge"}
         </span>
+
+        <AeatStatusChip />
 
         <label
           htmlFor="background-202"

@@ -340,6 +340,20 @@ def build_registro_alta_payload(
     }
 
 
+def is_aeat_remitting() -> bool:
+    """Safe public boolean: whether this process is remitting to Hacienda.
+
+    Fail-closed. Never returns cert paths or secrets.
+    True only with configured certs AND a proven in-session ACCEPTED CSV.
+    This runtime has neither (certs unset; no live CSV).
+    """
+    cert_set = bool(os.getenv("AEAT_CERT_PATH"))
+    key_set = bool(os.getenv("AEAT_KEY_PATH"))
+    if not (cert_set and key_set):
+        return False
+    return False
+
+
 def send_invoice_to_aeat(
     issuer_nif: str,
     issuer_name: str,

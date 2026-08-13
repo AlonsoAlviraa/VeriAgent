@@ -23,6 +23,7 @@ from shared.schemas import (
 )
 from core_engine.auth.rbac import OrgContext, parse_org_context, require_roles
 from ai_agents.adk.config import GCP_SERVICES, GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK
+from core_engine.aeat_connector import is_aeat_remitting
 from core_engine.control_plane.feature_flags import PROD_AEAT_ENABLED, FeatureFlagService
 from core_engine.control_plane.registry import TenantRegistry
 from core_engine.db.database import SessionLocal, get_db, init_db
@@ -106,6 +107,7 @@ def health_check():
         "runner": "InMemoryRunner",
         "gcp_services": list(GCP_SERVICES),
         "track": "Fortified Enterprise Fleet",
+        "aeat_remitting": is_aeat_remitting(),
     }
 
 
