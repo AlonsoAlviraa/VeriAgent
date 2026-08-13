@@ -4,8 +4,10 @@ import { asVerdict, verdictStyles, type Verdict } from "./verdict";
 
 export function VerdictPill({
   verdict,
+  glow = false,
 }: {
   verdict?: string;
+  glow?: boolean;
 }) {
   const key: Verdict = asVerdict(verdict);
   const s = verdictStyles[key];
@@ -13,13 +15,19 @@ export function VerdictPill({
     <Badge
       variant="outline"
       className={cn(
-        "h-auto rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-normal",
+        "relative h-auto rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-normal",
         s.border,
         s.bg,
         s.text
       )}
     >
-      {verdict || key}
+      {glow && (
+        <span
+          aria-hidden="true"
+          className={cn("vf-ring pointer-events-none absolute -inset-px rounded-full border", s.border, s.bg)}
+        />
+      )}
+      <span className="relative">{verdict || key}</span>
     </Badge>
   );
 }

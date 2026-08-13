@@ -1,14 +1,48 @@
 import type { ReactNode } from "react";
 import { verdictStyles, type Verdict } from "./verdict";
+import { useCountUp } from "./use-count-up";
+
+export type SettleSignal = { verdict: Verdict; tick: number };
+
+function CounterTile({
+  verdict,
+  value,
+  pulseKey,
+}: {
+  verdict: Verdict;
+  value: number;
+  pulseKey: number | null;
+}) {
+  const shown = useCountUp(value);
+  const s = verdictStyles[verdict];
+
+  return (
+    <div className="relative overflow-hidden">
+      {pulseKey !== null && (
+        <span
+          key={pulseKey}
+          aria-hidden="true"
+          className={`vf-ring pointer-events-none absolute inset-0 rounded-md border ${s.border} ${s.bg}`}
+        />
+      )}
+      <dt className="vf-label relative">{verdict}</dt>
+      <dd className={`relative mt-1 font-mono text-[28px] leading-none font-medium tabular-nums ${s.text}`}>
+        {String(shown).padStart(2, "0")}
+      </dd>
+    </div>
+  );
+}
 
 export function FleetHero({
   counters,
+  lastSettled = null,
   kicker = "Judge console",
   title = "The LLM never writes the hash.",
   description = "Drop invoices. The fleet audits, signs, or escalates. Gemini 3.5 consults tighten-only. Tools own the hash.",
   actions,
 }: {
   counters?: { signed: number; escalated: number; blocked: number };
+  lastSettled?: SettleSignal | null;
   kicker?: string;
   title?: string;
   description?: string;
@@ -38,19 +72,14 @@ export function FleetHero({
         </div>
         {values ? (
           <dl className="grid w-full grid-cols-3 gap-6 lg:w-auto lg:min-w-[280px]">
-            {order.map((verdict) => {
-              const s = verdictStyles[verdict];
-              return (
-                <div key={verdict}>
-                  <dt className="vf-label">{verdict}</dt>
-                  <dd
-                    className={`mt-1 font-mono text-[28px] leading-none font-medium tabular-nums ${s.text}`}
-                  >
-                    {String(values[verdict]).padStart(2, "0")}
-                  </dd>
-                </div>
-              );
-            })}
+            {order.map((verdict) => (
+              <CounterTile
+                key={verdict}
+                verdict={verdict}
+                value={values[verdict]}
+                pulseKey={lastSettled && lastSettled.verdict === verdict ? lastSettled.tick : null}
+              />
+            ))}
           </dl>
         ) : null}
       </div>

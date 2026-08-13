@@ -164,6 +164,64 @@ body {
   }
 }
 
+@keyframes vf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vf-rise {
+  animation: vf-rise 460ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes vf-scan {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(420%);
+  }
+}
+
+.vf-scan-bar {
+  animation: vf-scan 1.2s linear infinite;
+}
+
+@keyframes vf-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+
+.vf-ring {
+  animation: vf-ring 900ms ease-out both;
+}
+
+@keyframes vf-caret {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.vf-caret {
+  animation: vf-caret 900ms steps(1, end) infinite;
+}
+
 ::selection {
   background: rgb(24 121 78 / 18%);
   color: #111;
@@ -182,8 +240,13 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vf-enter {
+  .vf-enter,
+  .vf-rise,
+  .vf-ring,
+  .vf-scan-bar,
+  .vf-caret {
     animation: none !important;
+    opacity: 1 !important;
     transform: none !important;
   }
 }

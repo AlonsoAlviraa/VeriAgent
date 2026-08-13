@@ -1,6 +1,7 @@
 import { Bug, Calculator, FileCheck2, Play, UtensilsCrossed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { VerdictPill } from "./verdict-pill";
 
 export const FIXTURES = [
@@ -66,7 +67,8 @@ export function FixtureGrid({
             <Card
               key={fixture.id}
               size="sm"
-              className="vf-card gap-0 rounded-lg p-0 ring-0"
+              style={{ animationDelay: `${index * 80}ms` }}
+              className="vf-card vf-rise gap-0 rounded-lg p-0 ring-0 transition-transform duration-200 hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
                 <div className="flex min-w-0 items-start gap-3">
@@ -98,7 +100,11 @@ export function FixtureGrid({
                   size="sm"
                   disabled={busy}
                   onClick={() => onDispatch(fixture.path)}
-                  className="h-10 w-full justify-center rounded-md bg-[#18794e] text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#111] hover:text-white sm:h-8"
+                  className={cn(
+                    "h-10 w-full justify-center rounded-md border border-emerald-400/50 bg-emerald-400/15 text-[13px] font-medium text-[#17663f] transition-colors duration-150 sm:h-8",
+                    "hover:border-emerald-400 hover:bg-emerald-400 hover:text-[#04180f]",
+                    "focus-visible:border-emerald-400 focus-visible:bg-emerald-400 focus-visible:text-[#04180f]"
+                  )}
                 >
                   <Play data-icon="inline-start" aria-hidden />
                   Dispatch
