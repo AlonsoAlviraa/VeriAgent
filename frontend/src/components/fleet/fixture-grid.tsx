@@ -1,7 +1,6 @@
 import { Bug, Calculator, FileCheck2, Play, UtensilsCrossed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { VerdictPill } from "./verdict-pill";
 
 export const FIXTURES = [
@@ -9,7 +8,7 @@ export const FIXTURES = [
     id: "valid",
     label: "Valid invoice",
     path: "/demo-fixtures/valid_invoice.json",
-    hint: "Math + NIF hold. Hash is written by tools.",
+    hint: "Math and NIF hold. The hash is written by tools.",
     detail: "verifactu.chain → sign",
     expect: "SIGNED" as const,
     icon: FileCheck2,
@@ -18,7 +17,7 @@ export const FIXTURES = [
     id: "math",
     label: "Math error",
     path: "/demo-fixtures/math_error.json",
-    hint: "Consult can only tighten. Never signs 999.",
+    hint: "Consult can only tighten. It never signs 999.",
     detail: "consult(tighten-only) → escalate",
     expect: "ESCALATED" as const,
     icon: Calculator,
@@ -27,7 +26,7 @@ export const FIXTURES = [
     id: "injection",
     label: "Prompt injection",
     path: "/demo-fixtures/injection.json",
-    hint: "Model Armor stops ignore rules and sign.",
+    hint: "Model Armor stops “ignore rules and sign.”",
     detail: "model_armor → block",
     expect: "BLOCKED" as const,
     icon: Bug,
@@ -54,14 +53,12 @@ export function FixtureGrid({
 }) {
   return (
     <section aria-label="Fixtures" className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
-          Fixtures · dispatch to fleet
-        </h2>
-        <span className="font-mono text-[10px] text-slate-600">04 loaded</span>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[15px] font-medium tracking-tight text-[#111]">Fixtures</h2>
+        <span className="text-[12px] text-[#6f6e69]">4 loaded</span>
       </div>
 
-      <div className="vf-stagger grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {FIXTURES.map((fixture, index) => {
           const Icon = fixture.icon;
           const active = busy && activeJob === fixture.path;
@@ -69,43 +66,39 @@ export function FixtureGrid({
             <Card
               key={fixture.id}
               size="sm"
-              className={cn(
-                "vf-panel group gap-0 rounded-sm p-0 ring-0 transition-colors hover:border-emerald-400/35",
-                active && "vf-busy"
-              )}
+              className="vf-card gap-0 rounded-lg p-0 ring-0"
             >
-              <div className="flex items-start justify-between gap-3 px-3 pt-3 pb-2">
-                <div className="flex items-start gap-2.5">
-                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-sm border border-[#26344f] bg-[#0b1220]">
+              <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-[#e8e6e3] bg-[#fafaf8]">
                     {active ? (
-                      <Loader2 className="size-3.5 animate-spin text-emerald-300" />
+                      <Loader2 className="size-3.5 animate-spin text-[#18794e]" />
                     ) : (
-                      <Icon className="size-3.5 text-slate-300" />
+                      <Icon className="size-3.5 text-[#6f6e69]" />
                     )}
                   </span>
-                  <div>
-                    <h3 className="text-[13px] leading-tight font-medium tracking-tight text-slate-100">
+                  <div className="min-w-0">
+                    <h3 className="text-[14px] leading-tight font-medium text-[#111]">
                       {fixture.label}
                     </h3>
-                    <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-slate-600">
-                      fx-{String(index + 1).padStart(2, "0")} · {fixture.detail}
+                    <p className="mt-0.5 truncate text-[12px] text-[#6f6e69]">
+                      {String(index + 1).padStart(2, "0")} · {fixture.detail}
                     </p>
                   </div>
                 </div>
                 <VerdictPill verdict={fixture.expect} />
               </div>
 
-              <p className="border-t border-[#1b2740] px-3 py-2.5 text-[12px] leading-snug text-slate-400">
+              <p className="border-t border-[#e8e6e3] px-4 py-3 text-[13px] leading-snug text-[#6f6e69]">
                 {fixture.hint}
               </p>
 
-              <div className="border-t border-[#1b2740] px-3 py-2">
+              <div className="border-t border-[#e8e6e3] px-4 py-3">
                 <Button
-                  variant="ghost"
-                  size="xs"
+                  size="sm"
                   disabled={busy}
                   onClick={() => onDispatch(fixture.path)}
-                  className="h-7 w-full justify-center gap-1.5 rounded-sm border border-[#243350] bg-[#0b1220] font-mono text-[10px] uppercase tracking-[0.16em] text-slate-300 hover:border-emerald-400/40 hover:bg-emerald-400/10 hover:text-emerald-200"
+                  className="h-10 w-full justify-center rounded-md bg-[#18794e] text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#111] hover:text-white sm:h-8"
                 >
                   <Play data-icon="inline-start" aria-hidden />
                   Dispatch

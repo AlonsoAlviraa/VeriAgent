@@ -2,25 +2,22 @@ export type Verdict = "SIGNED" | "ESCALATED" | "BLOCKED";
 
 export const verdictStyles: Record<
   Verdict,
-  { text: string; border: string; bg: string; dot: string }
+  { text: string; border: string; bg: string }
 > = {
   SIGNED: {
-    text: "text-emerald-300",
-    border: "border-emerald-400/40",
-    bg: "bg-emerald-400/10",
-    dot: "bg-emerald-400",
+    text: "text-[#17663f]",
+    border: "border-[#c8e6d3]",
+    bg: "bg-[#eef8f1]",
   },
   ESCALATED: {
-    text: "text-amber-300",
-    border: "border-amber-400/40",
-    bg: "bg-amber-400/10",
-    dot: "bg-amber-400",
+    text: "text-[#9a4d09]",
+    border: "border-[#f3d5b0]",
+    bg: "bg-[#fbf3e8]",
   },
   BLOCKED: {
-    text: "text-rose-300",
-    border: "border-rose-400/40",
-    bg: "bg-rose-400/10",
-    dot: "bg-rose-400",
+    text: "text-[#9b2c2c]",
+    border: "border-[#f0c7c3]",
+    bg: "bg-[#fbefee]",
   },
 };
 

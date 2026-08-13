@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Hexagon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -10,22 +9,6 @@ const NAV = [
   { href: "/", label: "Audit" },
   { href: "/history", label: "Ledger" },
 ];
-
-const STATUS_CHIPS = ["ATA 2026", "google-adk", "gemini-3.5-flash"];
-
-export function BrandMark({ size = "md" }: { size?: "sm" | "md" }) {
-  const box = size === "sm" ? "size-8" : "size-8";
-  return (
-    <span
-      className={cn(
-        "vf-glow flex items-center justify-center rounded-sm border border-emerald-400/35 bg-emerald-400/10",
-        box
-      )}
-    >
-      <Hexagon className="size-4 text-emerald-300" strokeWidth={2.2} />
-    </span>
-  );
-}
 
 export function AppShell({
   children,
@@ -37,24 +20,14 @@ export function AppShell({
   const path = usePathname();
 
   return (
-    <div className="vf-app relative min-h-screen bg-[#0b1220] text-slate-200">
-      <header className="sticky top-0 z-30 w-full border-b border-[#1e2b45] bg-[#0b1220]/85 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:gap-6 md:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link href="/fleet" className="flex min-w-0 items-center gap-3">
-              <BrandMark />
-              <span className="flex flex-col leading-none">
-                <span className="text-[15px] font-semibold tracking-tight text-slate-50">
-                  VeriFleet
-                </span>
-                <span className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-slate-500">
-                  Fortified Enterprise Fleet
-                </span>
-              </span>
-            </Link>
-          </div>
+    <div className="vf-app min-h-screen bg-[#fafaf8] text-[#111]">
+      <header className="sticky top-0 z-30 border-b border-[#e8e6e3] bg-[#fafaf8]/90 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[1120px] items-center gap-4 px-4 py-3 md:px-6">
+          <Link href="/fleet" className="shrink-0 text-[15px] font-medium tracking-tight text-[#111]">
+            VeriFleet
+          </Link>
 
-          <nav aria-label="Console sections" className="flex min-w-0 items-center gap-4 overflow-x-auto md:ml-2 md:gap-6">
+          <nav aria-label="Console sections" className="flex min-w-0 items-center gap-1 overflow-x-auto">
             {NAV.map((item) => {
               const active = item.href === "/" ? path === "/" : path.startsWith(item.href);
               return (
@@ -62,10 +35,10 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "shrink-0 border-b-2 pb-1 font-mono text-[11px] uppercase tracking-[0.18em] transition",
+                    "shrink-0 rounded-md px-2.5 py-1 text-[13px] transition-colors duration-150",
                     active
-                      ? "border-emerald-400 text-emerald-300"
-                      : "border-transparent text-slate-500 hover:text-slate-200"
+                      ? "bg-white text-[#111] shadow-[0_0_0_1px_#e8e6e3]"
+                      : "text-[#6f6e69] hover:text-[#111]"
                   )}
                 >
                   {item.label}
@@ -74,26 +47,16 @@ export function AppShell({
             })}
           </nav>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <ul className="flex flex-wrap items-center gap-1.5">
-              {STATUS_CHIPS.map((chip) => (
-                <li
-                  key={chip}
-                  className="vf-panel-inset flex items-center gap-1.5 rounded-sm px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400"
-                >
-                  <span className="vf-dot-pulse size-1 rounded-full bg-emerald-400" aria-hidden />
-                  {chip}
-                </li>
-              ))}
-            </ul>
-            {right}
-          </div>
+          <p className="ml-auto hidden truncate text-[12px] text-[#6f6e69] sm:block">
+            google-adk · gemini-3.5-flash
+          </p>
         </div>
+        {right ? <div className="mx-auto hidden max-w-[1120px] px-4 pb-3 md:block md:px-6">{right}</div> : null}
       </header>
       {children}
-      <footer className="border-t border-[#1e2b45] px-4 py-4 md:px-6">
-        <p className="mx-auto w-full max-w-[1280px] font-mono text-[10px] uppercase tracking-[0.16em] text-slate-600">
-          VeriFleet judge console · local InMemoryRunner session · no chat surface
+      <footer className="border-t border-[#e8e6e3] px-4 py-5 md:px-6">
+        <p className="mx-auto w-full max-w-[1120px] text-[12px] leading-relaxed text-[#6f6e69]">
+          VeriFleet · google-adk · gemini-3.5-flash · local InMemoryRunner session · no chat surface
         </p>
       </footer>
     </div>

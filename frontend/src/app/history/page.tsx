@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, XCircle, Download, ExternalLink, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,16 +21,13 @@ const FULL_HISTORY = [
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
-    FIRMADO: "bg-emerald-400/12 text-emerald-300 ring-1 ring-emerald-400/25",
-    REVISAR: "bg-amber-400/12 text-amber-200 ring-1 ring-amber-400/25",
-    RECHAZADO: "bg-rose-400/12 text-rose-300 ring-1 ring-rose-400/25",
+    FIRMADO: "bg-[#eef8f1] text-[#17663f] border-[#c8e6d3]",
+    REVISAR: "bg-[#fbf3e8] text-[#9a4d09] border-[#f3d5b0]",
+    RECHAZADO: "bg-[#fbefee] text-[#9b2c2c] border-[#f0c7c3]",
   };
 
   return (
-    <span className={cn("inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold", styles[status])}>
-      {status === "FIRMADO" && <CheckCircle2 className="size-3" />}
-      {status === "REVISAR" && <AlertTriangle className="size-3" />}
-      {status === "RECHAZADO" && <XCircle className="size-3" />}
+    <span className={cn("inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", styles[status])}>
       {status}
     </span>
   );
@@ -39,16 +36,16 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function HistoryPage() {
   return (
     <AppShell>
-      <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-10">
+      <main className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-4 py-8 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="vf-kicker">Product ledger</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Ledger</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Mock Smart Audit rows. Not live evidence. Live fleet decisions are on /fleet.
+            <p className="vf-label">Product ledger</p>
+            <h1 className="mt-2 text-[28px] font-medium tracking-[-0.03em] text-[#111]">Ledger</h1>
+            <p className="mt-1 text-sm text-[#6f6e69]">
+              Mock product rows. Not live evidence. Live fleet decisions are on /fleet.
             </p>
           </div>
-          <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-100">
+          <Badge variant="outline" className="rounded-full border-[#f3d5b0] bg-[#fbf3e8] text-[#9a4d09]">
             MOCK
           </Badge>
         </div>
@@ -56,85 +53,62 @@ export default function HistoryPage() {
         <Button
           render={<Link href="/fleet" />}
           nativeButton={false}
-          variant="ghost"
-          className="vf-card vf-card-hover h-auto w-full justify-between rounded-2xl px-5 py-4 text-left"
+          variant="outline"
+          className="h-auto w-full justify-between rounded-lg border-[#e8e6e3] bg-white px-4 py-4 text-left hover:bg-[#fafaf8]"
         >
           <span>
-            <span className="block text-sm font-semibold text-white">Live SIGN / ESCALATE / BLOCK runs</span>
-            <span className="block text-xs font-normal text-slate-500">
+            <span className="block text-sm font-medium text-[#111]">Live SIGN / ESCALATE / BLOCK runs</span>
+            <span className="block text-xs font-normal text-[#6f6e69]">
               This table is a product mock. The contest console is /fleet.
             </span>
           </span>
-          <ArrowRight data-icon="inline-end" className="text-emerald-300" />
+          <ArrowRight data-icon="inline-end" className="text-[#6f6e69]" />
         </Button>
 
-        <div className="vf-stagger grid grid-cols-3 gap-3">
-          <div className="vf-card rounded-2xl p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{FULL_HISTORY.length}</p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">Total</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#111]">{FULL_HISTORY.length}</p>
           </div>
-          <div className="vf-card rounded-2xl p-5 ring-1 ring-emerald-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/80">Signed</p>
-            <p className="mt-2 text-3xl font-semibold text-emerald-300">
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">Signed</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#17663f]">
               {FULL_HISTORY.filter((h) => h.status === "FIRMADO").length}
             </p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
           </div>
-          <div className="vf-card rounded-2xl p-5 ring-1 ring-amber-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/80">Pending</p>
-            <p className="mt-2 text-3xl font-semibold text-amber-200">
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">Pending</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#9a4d09]">
               {FULL_HISTORY.filter((h) => h.status === "REVISAR").length}
             </p>
-            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
           </div>
         </div>
 
-        <section className="vf-card overflow-hidden rounded-[2rem]">
-          <div className="flex items-center justify-between border-b border-white/6 px-5 py-3">
-            <p className="text-xs font-semibold text-slate-300">Sample rows</p>
-            <Badge variant="outline" className="text-[10px] text-amber-100">
-              MOCK — not live evidence
-            </Badge>
+        <section className="vf-card overflow-hidden rounded-lg">
+          <div className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-3">
+            <p className="text-[15px] font-medium text-[#111]">Sample rows</p>
+            <span className="text-[12px] text-[#6f6e69]">MOCK — not live evidence</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[640px] text-left text-[13px]">
               <thead>
-                <tr className="border-b border-white/6 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-2 py-4">Issuer</th>
-                  <th className="px-2 py-4 text-right">Amount</th>
-                  <th className="px-2 py-4">Hash</th>
-                  <th className="px-2 py-4">Status</th>
-                  <th className="px-6 py-4" />
+                <tr className="border-b border-[#e8e6e3] text-[11px] font-medium tracking-wide text-[#6f6e69] uppercase">
+                  <th className="px-4 py-2.5 font-medium">Date</th>
+                  <th className="px-4 py-2.5 font-medium">Issuer</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Amount</th>
+                  <th className="px-4 py-2.5 font-medium">Hash</th>
+                  <th className="px-4 py-2.5 font-medium">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/6">
+              <tbody>
                 {FULL_HISTORY.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-white/3">
-                    <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
-                    <td className="px-2 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-lg bg-white/6 text-[10px] font-black text-white">
-                          {item.logo}
-                        </div>
-                        <span className="text-sm font-semibold text-slate-200">{item.issuer}</span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-4 text-right font-mono text-sm font-semibold text-white">{item.amount}</td>
-                    <td className="px-2 py-4 font-mono text-xs text-slate-500">{item.hash}</td>
-                    <td className="px-2 py-4">
+                  <tr key={item.id} className="border-b border-[#e8e6e3] last:border-0">
+                    <td className="px-4 py-3 text-[#6f6e69]">{item.date}</td>
+                    <td className="px-4 py-3 font-medium text-[#111]">{item.issuer}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#111]">{item.amount}</td>
+                    <td className="px-4 py-3 font-mono text-[12px] text-[#6f6e69]">{item.hash}</td>
+                    <td className="px-4 py-3">
                       <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1 text-slate-500">
-                        <span className="rounded-lg p-2">
-                          <ExternalLink className="size-4" />
-                        </span>
-                        <span className="rounded-lg p-2">
-                          <Download className="size-4" />
-                        </span>
-                      </div>
                     </td>
                   </tr>
                 ))}

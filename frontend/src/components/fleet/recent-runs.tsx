@@ -1,4 +1,5 @@
-import { Hash, Loader2 } from "lucide-react";
+import { asVerdict } from "./verdict";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerdictPill } from "./verdict-pill";
 
@@ -28,134 +29,109 @@ export function RecentRuns({
   runner: string;
 }) {
   const pending = live && (live.status === "QUEUED" || live.status === "RUNNING");
-  const terminal = Boolean(live) && !pending;
+  const rows = live && !runs.some((run) => run.run_id === live.run_id) ? [live, ...runs] : runs;
+  const visible = rows.slice(0, 12);
 
   return (
-    <section aria-label="Recent runs" className="vf-panel flex flex-col rounded-sm">
-      <header className="flex items-center justify-between border-b border-[#1b2740] px-3 py-2.5">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
-          Recent runs
-        </h2>
-        <span className="font-mono text-[10px] text-slate-600">
-          {String(runs.length).padStart(2, "0")} in session
+    <section aria-label="Recent runs" className="vf-card overflow-hidden rounded-lg">
+      <header className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-3">
+        <h2 className="text-[15px] font-medium tracking-tight text-[#111]">Recent runs</h2>
+        <span className="text-[12px] text-[#6f6e69]">
+          {runs.length} in session
+          {live?.adk?.consult?.runner || runner ? ` · ${live?.adk?.consult?.runner || runner}` : ""}
         </span>
       </header>
 
-      {live && (
-        <div className="border-b border-[#1b2740] px-3 py-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-slate-600">
-                Last decision
-              </p>
-              <p className="mt-1 truncate font-mono text-[10px] text-slate-500">{live.run_id}</p>
-            </div>
-            {pending ? (
-              <span
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-sm border bg-[#0b1220] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400",
-                  live.status === "QUEUED"
-                    ? "vf-status-queued border-amber-400/35 text-amber-200"
-                    : "border-[#243350]"
-                )}
-              >
-                <Loader2 className="size-3 animate-spin" aria-hidden />
-                {live.status === "QUEUED" ? "202" : live.status}
-              </span>
-            ) : (
-              <span className={cn(live.status === "COMPLETED" && "vf-status-completed")}>
-                <VerdictPill
-                  key={`${live.run_id}:${live.status}:${live.decision}`}
-                  verdict={live.decision}
-                  glow={live.decision === "SIGNED"}
-                  pulse={terminal}
-                />
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-[12px] leading-snug text-slate-400">{live.reason}</p>
-          {live.invoice_hash ? (
-            <p className="mt-2 flex flex-col gap-1 font-mono text-[10px] text-slate-500">
-              <span className="flex items-center gap-1.5">
-                <Hash className="size-3 text-emerald-400/70" aria-hidden />
-                <span className="vf-hash-reveal text-emerald-300/80">{shortHash(live.invoice_hash)}</span>
-              </span>
-              <span className="break-all text-slate-600">{live.invoice_hash}</span>
-            </p>
-          ) : (
-            <p className="mt-2 font-mono text-[10px] text-slate-600">
-              {pending ? "accepted 202 · fleet working" : "no hash written"}
-            </p>
-          )}
-          <div className="mt-3 grid grid-cols-3 gap-px overflow-hidden rounded-sm border border-[#1b2740] bg-[#1b2740]">
-            <Meta title="Armor" value={live.armor?.allowed === false ? "BLOCKED" : "clean"} />
-            <Meta
-              title="ADK"
-              value={live.adk?.consult?.invoked ? live.adk.consult.recommendation || "invoked" : "offline"}
-              detail={live.adk?.consult?.runner || live.adk?.consult?.model || runner}
-            />
-            <Meta
-              title="Pub/Sub"
-              value={live.pubsub?.published ? "published" : "local no-op"}
-              detail={live.pubsub?.topic || live.pubsub?.reason}
-            />
-          </div>
-        </div>
-      )}
-
-      {runs.length === 0 && !live ? (
-        <p className="px-3 py-6 text-center font-mono text-[11px] text-slate-600">
+      {visible.length === 0 ? (
+        <p className="px-4 py-10 text-center text-[13px] text-[#6f6e69]">
           No runs yet — dispatch a fixture.
         </p>
       ) : (
-        <ol className="vf-scroll max-h-[280px] divide-y divide-[#161f33] overflow-y-auto">
-          {runs.slice(0, 12).map((run, index) => {
-            const queued = run.status === "QUEUED" || run.status === "RUNNING";
-            return (
-              <li key={run.run_id} className="flex items-start gap-3 px-3 py-2.5">
-                <span className="mt-0.5 w-8 shrink-0 font-mono text-[10px] tabular-nums text-slate-600">
-                  #{String(runs.length - index).padStart(3, "0")}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12px] font-medium tracking-tight text-slate-200">
-                      {run.reason}
-                    </span>
+        <>
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[640px] text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-[#e8e6e3] text-[11px] font-medium tracking-wide text-[#6f6e69] uppercase">
+                  <th className="px-4 py-2.5 font-medium">Run</th>
+                  <th className="px-4 py-2.5 font-medium">Decision</th>
+                  <th className="px-4 py-2.5 font-medium">Reason</th>
+                  <th className="px-4 py-2.5 font-medium">Hash</th>
+                  <th className="px-4 py-2.5 font-medium">Armor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((run, index) => {
+                  const queued = run.status === "QUEUED" || run.status === "RUNNING";
+                  const newest = index === 0 && live?.run_id === run.run_id;
+                  return (
+                    <tr
+                      key={`${run.run_id}:${run.status}:${run.decision}`}
+                      className={cn(
+                        "border-b border-[#e8e6e3] last:border-0",
+                        newest && "vf-enter"
+                      )}
+                    >
+                      <td className="px-4 py-3 align-top font-mono text-[12px] text-[#6f6e69]">
+                        {run.run_id.slice(0, 10)}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {queued ? (
+                          <QueuedMark status={run.status} />
+                        ) : (
+                          <VerdictPill verdict={asVerdict(run.decision)} />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top text-[#111]">{run.reason}</td>
+                      <td className="px-4 py-3 align-top font-mono text-[12px] text-[#6f6e69]">
+                        {run.invoice_hash ? shortHash(run.invoice_hash) : "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top text-[#6f6e69]">
+                        {run.armor?.allowed === false ? "blocked" : queued ? run.status.toLowerCase() : "clean"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <ol className="divide-y divide-[#e8e6e3] md:hidden">
+            {visible.map((run, index) => {
+              const queued = run.status === "QUEUED" || run.status === "RUNNING";
+              const newest = index === 0 && live?.run_id === run.run_id;
+              return (
+                <li
+                  key={`${run.run_id}:${run.status}:${run.decision}`}
+                  className={cn("flex flex-col gap-2 px-4 py-3", newest && "vf-enter")}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 text-[13px] font-medium text-[#111]">{run.reason}</p>
                     {queued ? (
-                      <span className="flex shrink-0 items-center gap-1.5 rounded-sm border border-[#243350] bg-[#0b1220] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-slate-400">
-                        <Loader2 className="size-3 animate-spin" aria-hidden />
-                        {run.status === "QUEUED" ? "202" : run.status}
-                      </span>
+                      <QueuedMark status={run.status} />
                     ) : (
-                      <VerdictPill verdict={run.decision} />
+                      <VerdictPill verdict={asVerdict(run.decision)} />
                     )}
                   </div>
-                  <p className="mt-1 flex items-center gap-1.5 font-mono text-[10px] text-slate-500">
-                    {run.invoice_hash ? (
-                      <>
-                        <Hash className="size-3 text-emerald-400/70" aria-hidden />
-                        <span className="text-emerald-300/80">{shortHash(run.invoice_hash)}</span>
-                      </>
-                    ) : (
-                      <span className="text-slate-600">no hash written</span>
-                    )}
+                  <p className="font-mono text-[12px] text-[#6f6e69]">
+                    {run.invoice_hash ? shortHash(run.invoice_hash) : "no hash"}
+                    {" · "}
+                    {run.armor?.allowed === false ? "armor blocked" : queued ? run.status.toLowerCase() : "armor clean"}
                   </p>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+                </li>
+              );
+            })}
+          </ol>
+        </>
       )}
     </section>
   );
 }
 
-function Meta({ title, value, detail }: { title: string; value: string; detail?: string }) {
+function QueuedMark({ status }: { status: string }) {
   return (
-    <div className="bg-[#0b1220] px-2 py-2">
-      <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-slate-600">{title}</p>
-      <p className="mt-0.5 truncate text-[11px] text-slate-200">{value}</p>
-      {detail && <p className="truncate font-mono text-[9px] text-slate-600">{detail}</p>}
-    </div>
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e8e6e3] bg-[#f4f3f0] px-2 py-0.5 text-[11px] text-[#6f6e69]">
+      <Loader2 className="size-3 animate-spin" aria-hidden />
+      {status === "QUEUED" ? "queued" : status.toLowerCase()}
+    </span>
   );
 }

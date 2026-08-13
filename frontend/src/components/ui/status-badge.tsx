@@ -19,54 +19,54 @@ const statusConfig: Record<string, {
 }> = {
     [InvoiceStatus.SENT_OK]: {
         label: "ENVIADA AEAT",
-        bgColor: "bg-emerald-400/12",
-        textColor: "text-emerald-300",
-        borderColor: "border-emerald-400/25",
+        bgColor: "bg-[#eef8f1]",
+        textColor: "text-[#17663f]",
+        borderColor: "border-[#c8e6d3]",
         icon: <CheckCircle2 className="w-3.5 h-3.5" />,
         tooltip: "Factura aceptada por Hacienda",
     },
     [InvoiceStatus.REJECTED_AEAT]: {
         label: "RECHAZADA",
-        bgColor: "bg-rose-400/12",
-        textColor: "text-rose-300",
-        borderColor: "border-rose-400/25",
+        bgColor: "bg-[#fbefee]",
+        textColor: "text-[#9b2c2c]",
+        borderColor: "border-[#f0c7c3]",
         icon: <XCircle className="w-3.5 h-3.5" />,
         tooltip: "Ver error en logs",
     },
     [InvoiceStatus.SIGNED]: {
         label: "PENDIENTE ENVIO",
-        bgColor: "bg-amber-400/12",
-        textColor: "text-amber-200",
-        borderColor: "border-amber-400/25",
+        bgColor: "bg-[#fbf3e8]",
+        textColor: "text-[#9a4d09]",
+        borderColor: "border-[#f3d5b0]",
         icon: <Clock className="w-3.5 h-3.5" />,
         tooltip: "Firmada, pendiente de envio a AEAT",
     },
     [InvoiceStatus.VALIDATED]: {
         label: "VALIDADA",
-        bgColor: "bg-sky-400/12",
-        textColor: "text-sky-300",
-        borderColor: "border-sky-400/25",
+        bgColor: "bg-[#eef4fb]",
+        textColor: "text-[#185fa5]",
+        borderColor: "border-[#c9d9ee]",
         icon: <FileCheck className="w-3.5 h-3.5" />,
     },
     [InvoiceStatus.PROCESSING]: {
         label: "PROCESANDO",
-        bgColor: "bg-white/6",
-        textColor: "text-slate-300",
-        borderColor: "border-white/10",
+        bgColor: "bg-[#f4f3f0]",
+        textColor: "text-[#6f6e69]",
+        borderColor: "border-[#e8e6e3]",
         icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
     },
     [InvoiceStatus.DRAFT]: {
         label: "BORRADOR",
-        bgColor: "bg-white/6",
-        textColor: "text-slate-400",
-        borderColor: "border-white/10",
+        bgColor: "bg-[#f4f3f0]",
+        textColor: "text-[#6f6e69]",
+        borderColor: "border-[#e8e6e3]",
         icon: <Clock className="w-3.5 h-3.5" />,
     },
     [InvoiceStatus.ERROR]: {
         label: "ERROR",
-        bgColor: "bg-rose-400/12",
-        textColor: "text-rose-300",
-        borderColor: "border-rose-400/25",
+        bgColor: "bg-[#fbefee]",
+        textColor: "text-[#9b2c2c]",
+        borderColor: "border-[#f0c7c3]",
         icon: <AlertTriangle className="w-3.5 h-3.5" />,
     },
 };
@@ -94,7 +94,7 @@ export function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
     return (
         <span
             className={`
-        inline-flex items-center gap-1.5 font-bold rounded-lg border
+        inline-flex items-center gap-1.5 font-medium rounded-full border
         ${config.bgColor} ${config.textColor} ${config.borderColor}
         ${sizeClasses[size]}
       `}

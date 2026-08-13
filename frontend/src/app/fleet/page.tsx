@@ -237,34 +237,32 @@ export default function FleetPage() {
         onBackground202Change={setBackground}
       />
 
-      <main className="relative z-10 mx-auto w-full max-w-[1280px] px-4 py-6 md:px-6 md:py-8">
+      <main className="mx-auto w-full max-w-[1120px] px-4 py-6 md:px-6 md:py-8">
         {error && (
-          <p className="mb-4 rounded-sm border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <p className="mb-4 rounded-lg border border-[#f0c7c3] bg-[#fbefee] px-4 py-3 text-sm text-[#9b2c2c]">
             {error}
           </p>
         )}
         {role === "auditor" && (
-          <p className="mb-4 rounded-sm border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          <p className="mb-4 rounded-lg border border-[#f3d5b0] bg-[#fbf3e8] px-4 py-3 text-sm text-[#9a4d09]">
             Auditor role cannot sign. Denied: {(identity?.denied_tools || []).join(", ") || "invoice.sign"}.
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="flex flex-col gap-6">
-            <FixtureGrid busy={busy} activeJob={activeJob} onDispatch={loadFixture} />
-            <IngestPanel busy={busy} activeJob={activeJob} onUpload={ingestPdf} onSweep={runSweep} />
-          </div>
-          <aside className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
+          <FixtureGrid busy={busy} activeJob={activeJob} onDispatch={loadFixture} />
+          <IngestPanel busy={busy} activeJob={activeJob} onUpload={ingestPdf} onSweep={runSweep} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
             <RecentRuns runs={history} live={run} runner={runner} />
             <FleetChecklist track={checklist?.track} items={checklist?.items || []} />
-            <AgentIdentity
-              tenant={tenant}
-              role={role}
-              userId={identity?.user_id}
-              allowed={identity?.allowed_tools || []}
-              denied={identity?.denied_tools || []}
-            />
-          </aside>
+          </div>
+          <AgentIdentity
+            tenant={tenant}
+            role={role}
+            userId={identity?.user_id}
+            allowed={identity?.allowed_tools || []}
+            denied={identity?.denied_tools || []}
+          />
         </div>
       </main>
     </AppShell>
