@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import threading
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Sequence
@@ -26,7 +27,7 @@ from core_engine.db.fleet_models import FleetRunModel
 
 logger = logging.getLogger(__name__)
 LEASE_SECONDS = 60
-_LOCK = threading.Lock()
+_COND = threading.Condition()
 _QUEUE: list[str] = []
 _WORKER_STARTED = False
 
@@ -188,23 +189,28 @@ def _result_from_row(loaded: Optional[dict]) -> FleetResult:
 
 def _offer(run_id: str) -> None:
     global _WORKER_STARTED
-    with _LOCK:
+    with _COND:
         _QUEUE.append(run_id)
         if not _WORKER_STARTED:
             _WORKER_STARTED = True
             threading.Thread(target=_drain, name="verifleet-fifo", daemon=True).start()
+        _COND.notify()
 
 
 def _drain() -> None:
     while True:
-        with _LOCK:
-            if not _QUEUE:
-                return
+        with _COND:
+            while not _QUEUE:
+                _COND.wait()
             rid = _QUEUE.pop(0)
         try:
             execute(rid)
         except FleetInFlight:
             logger.info("fleet run %s still in flight", rid)
+            time.sleep(0.4)
+            with _COND:
+                _QUEUE.append(rid)
+                _COND.notify()
         except Exception:
             logger.exception("fleet worker failed for %s", rid)
             _mark_worker_error(rid)

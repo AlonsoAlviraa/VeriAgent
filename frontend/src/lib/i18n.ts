@@ -107,6 +107,8 @@ const en = {
   "error.batch": "Batch failed",
   "error.loadFixture": "Could not load {path}",
   "error.uploadFailed": "Upload failed",
+  "error.queueStuck":
+    "Still QUEUED — the FIFO worker did not finish this run. Turn Background 202 off and Dispatch inline. This page updates if the worker catches up.",
   "auditor.banner": "Auditor role cannot sign. Denied: {tools}.",
 
   "landing.kicker": "The LLM never writes the hash.",
@@ -286,6 +288,8 @@ const es: Record<MessageKey, string> = {
   "error.batch": "Falló el lote",
   "error.loadFixture": "No se pudo cargar {path}",
   "error.uploadFailed": "Falló la subida",
+  "error.queueStuck":
+    "Sigue en QUEUED — el worker FIFO no terminó esta ejecución. Apaga Background 202 y despacha en línea. Esta página se actualiza si el worker alcanza.",
   "auditor.banner": "El rol auditor no puede firmar. Denegado: {tools}.",
 
   "landing.kicker": "The LLM never writes the hash.",

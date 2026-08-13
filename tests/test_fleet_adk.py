@@ -671,3 +671,32 @@ def test_fleet_api_ingest_and_get(db_session):
         assert reg.json()["model"] == GEMINI_MODEL
     finally:
         app.dependency_overrides.clear()
+
+
+def test_fifo_worker_drains_second_job_after_idle(monkeypatch):
+    """Regression: drain used to return and leave _WORKER_STARTED set, so job 2 never ran."""
+    import time
+
+    from ai_agents.adk import queue as fleet_queue
+
+    executed: list[str] = []
+
+    def _fake_execute(run_id, db=None):
+        executed.append(run_id)
+        return type("R", (), {"run_id": run_id})()
+
+    monkeypatch.setattr(fleet_queue, "execute", _fake_execute)
+    with fleet_queue._COND:
+        fleet_queue._QUEUE.clear()
+
+    fleet_queue._offer("job-a")
+    deadline = time.time() + 2
+    while "job-a" not in executed and time.time() < deadline:
+        time.sleep(0.02)
+    assert executed == ["job-a"]
+
+    fleet_queue._offer("job-b")
+    deadline = time.time() + 2
+    while "job-b" not in executed and time.time() < deadline:
+        time.sleep(0.02)
+    assert executed == ["job-a", "job-b"]

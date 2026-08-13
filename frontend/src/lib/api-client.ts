@@ -35,7 +35,10 @@ apiClient.interceptors.request.use((config) => {
     const tenantId = getActiveTenant();
     if (tenantId) {
         config.headers = config.headers ?? {};
-        config.headers["X-Tenant-Id"] = tenantId;
+        const already = config.headers["X-Tenant-Id"] ?? config.headers["x-tenant-id"];
+        if (!already) {
+            config.headers["X-Tenant-Id"] = tenantId;
+        }
     }
     return config;
 });
