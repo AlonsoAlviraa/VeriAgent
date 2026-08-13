@@ -220,12 +220,20 @@ export default function FleetPage() {
       const up = await apiClient.post<{ file_id: string }>("/api/v1/invoices/upload", form, {
         headers: { ...headers(), "Content-Type": undefined as unknown as string },
       });
+      const wait = !background;
       const res = await apiClient.post<FleetRun>(
         "/api/v1/fleet/ingest",
-        { file_id: up.data.file_id },
-        { headers: headers() }
+        { file_id: up.data.file_id, wait },
+        { headers: headers(), params: { wait } }
       );
-      setRun(res.data);
+      if (background && (res.status === 202 || isPendingStatus(res.data.status))) {
+        setRun(res.data);
+        setHistory((prev) => mergeRuns(prev, [res.data]));
+        const settled = await pollUntilDone([res.data.run_id]);
+        if (!settled) setError({ kind: "key", key: "error.queueStuck" });
+      } else {
+        setRun(res.data);
+      }
       await refreshMeta();
     } catch (err: any) {
       setError({ kind: "api", err, fallback: "error.pdfIngest" });
@@ -291,20 +299,25 @@ export default function FleetPage() {
         { invoices, wait },
         { headers: headers(), params: { wait } }
       );
-      const ids = res.data.run_ids || (res.data.runs || []).map((r) => r.run_id);
-      if (res.data.runs?.[0]) {
+      const ids = res.data.run_ids || (res.data.runs || []).map((r) => r.run_id).filter(Boolean);
+      if (res.data.runs?.length) {
         setRun(res.data.runs[0]);
         setHistory((prev) => mergeRuns(prev, res.data.runs || []));
-      } else if (ids[0]) {
-        setRun({
-          run_id: ids[0],
+      } else if (ids.length) {
+        const queued = ids.map((run_id) => ({
+          run_id,
           tenant_id: tenant,
-          status: "QUEUED",
+          status: "QUEUED" as const,
           decision: "",
           reason: "",
-        });
+        }));
+        setRun(queued[0]);
+        setHistory((prev) => mergeRuns(prev, queued));
       }
-      if (background || res.status === 202 || (res.data.runs || []).some((row) => isPendingStatus(row.status))) {
+      if (
+        ids.length &&
+        (background || res.status === 202 || (res.data.runs || []).some((row) => isPendingStatus(row.status)))
+      ) {
         const settled = await pollUntilDone(ids);
         if (!settled) setError({ kind: "key", key: "error.queueStuck" });
       }

@@ -1,9 +1,9 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { t, type Locale } from "./i18n";
 
 /**
- * [FE-002] Configured Axios instance for VeriAgent Backend.
- * Handles base URL, tenant routing and generic network errors.
+ * Same-origin axios. Next app/api/v1/[...path] proxies to 127.0.0.1:8000.
+ * Never omit wait=false. Never clobber an explicit X-Tenant-Id.
  */
 
 export const TENANT_STORAGE_KEY = "veriagent_tenant_id";
@@ -22,43 +22,43 @@ export function formatApiError(error: unknown, locale: Locale = "es"): string {
     return err.response.data?.detail || err.response.data?.message || err.message || t(locale, "error.requestFailed");
 }
 
-function readHeader(headers: unknown, name: string): string {
-    if (!headers || typeof headers !== "object") return "";
-    const bag = headers as { get?: (key: string) => unknown; [key: string]: unknown };
-    const fromGet = typeof bag.get === "function" ? bag.get(name) : undefined;
-    const value = fromGet ?? bag[name] ?? bag[name.toLowerCase()];
-    return value == null ? "" : String(value);
-}
-
 const apiClient = axios.create({
-    // Same-origin so the browser does not hit :8000 (CORS). Next proxies /api/v1 → 127.0.0.1:8000.
     baseURL: "",
     headers: {
         "Content-Type": "application/json",
     },
+    paramsSerializer: {
+        serialize(params) {
+            const search = new URLSearchParams();
+            for (const [key, value] of Object.entries(params || {})) {
+                if (value === undefined || value === null) continue;
+                if (value === true || value === false) {
+                    search.set(key, value ? "true" : "false");
+                    continue;
+                }
+                search.set(key, String(value));
+            }
+            return search.toString();
+        },
+    },
 });
 
-// Request Interceptor: inyecta X-Tenant-Id en cada llamada (PUX-05).
 apiClient.interceptors.request.use((config) => {
-    const tenantId = getActiveTenant();
-    if (tenantId) {
-        config.headers = config.headers ?? {};
-        if (!readHeader(config.headers, "X-Tenant-Id")) {
-            config.headers["X-Tenant-Id"] = tenantId;
-        }
+    const headers = AxiosHeaders.from(config.headers);
+    if (!headers.get("X-Tenant-Id")) {
+        const tenantId = getActiveTenant();
+        if (tenantId) headers.set("X-Tenant-Id", tenantId);
     }
+    config.headers = headers;
     return config;
 });
 
-// Response Interceptor for Global Error Handling
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (!error.response) {
-            // Network Error (server down, CORS, etc.)
             console.error("CRITICAL: El servidor no responde o no está disponible.");
         } else {
-            // API Error (4xx, 5xx)
             const message = error.response.data?.detail || error.response.data?.message || "Error desconocido";
             console.warn(`API Error [${error.response.status}]: ${message}`);
         }

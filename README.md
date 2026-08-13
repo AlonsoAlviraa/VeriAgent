@@ -69,7 +69,9 @@ Optional Postgres: `docker compose up db -d`.
 cd frontend && npm install && npm run dev
 ```
 
-Open **http://localhost:3000/fleet** — that is the operator console. Landing (`/`) only sells and links here.
+Open **http://127.0.0.1:3000/fleet** — that is the operator console. Landing (`/`) only sells and links here.
+
+Browser `/api/v1` is proxied by `frontend/src/app/api/v1/[...path]/route.ts` (not a `next.config` rewrite). After pulling this, **restart `npm run dev`** so the rewrite is gone, and **recycle uvicorn** so the FIFO + list-drain code loads.
 
 ```bash
 python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json

@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const fetchCache = "force-no-store";
 
 /**
- * Browser path is http://127.0.0.1:3000/api/v1/* (same-origin).
- * next.config rewrites to localhost can hit ::1 while curl uses 127.0.0.1 —
- * two uvicorn processes, two in-memory FIFOs. Pin 127.0.0.1 and forward
- * query + org headers so wait=false and GET /runs/{id} hit the same backend.
+ * Same-origin browser proxy: http://127.0.0.1:3000/api/v1/* → 127.0.0.1:8000.
+ * Must forward query (?wait=false) and org headers. next.config rewrites must
+ * not exist for this path — they run before this dynamic route.
  */
 function backendOrigin(): string {
   const raw =
@@ -37,20 +37,23 @@ async function proxy(req: NextRequest, ctx: { params: { path: string[] } | Promi
     const value = req.headers.get(name);
     if (value) headers.set(name, value);
   }
+  if (!headers.has("x-tenant-id")) {
+    const fallback = req.headers.get("X-Tenant-Id");
+    if (fallback) headers.set("x-tenant-id", fallback);
+  }
 
   const method = req.method.toUpperCase();
-  const body =
-    method === "GET" || method === "HEAD" || method === "OPTIONS"
-      ? undefined
-      : await req.arrayBuffer();
+  const hasBody = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+  const body = hasBody ? await req.arrayBuffer() : undefined;
 
-  const upstream = await fetch(dest, {
+  const upstream = await fetch(dest.toString(), {
     method,
     headers,
     body,
     cache: "no-store",
     redirect: "manual",
-  });
+    ...(body ? { duplex: "half" } : {}),
+  } as RequestInit);
 
   const out = new Headers();
   const contentType = upstream.headers.get("content-type");

@@ -1,22 +1,11 @@
 import type { NextConfig } from "next";
 
-const backend = (
-  process.env.BACKEND_URL ||
-  process.env.API_PROXY_TARGET ||
-  "http://127.0.0.1:8000"
-)
-  .replace(/\/$/, "")
-  .replace("://localhost", "://127.0.0.1");
-
-const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${backend}/api/v1/:path*`,
-      },
-    ];
-  },
-};
+/**
+ * Do NOT rewrite /api/v1 here.
+ * Array rewrites run after static files and BEFORE dynamic App routes, so
+ * they steal /api/v1/:path* from app/api/v1/[...path]/route.ts and can drop
+ * ?wait= and X-Tenant-Id. The route handler is the only browser → API proxy.
+ */
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

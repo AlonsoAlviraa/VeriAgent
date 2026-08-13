@@ -497,8 +497,21 @@ def fleet_list_runs(
     org: OrgContext = Depends(get_org_context),
     limit: int = 20,
 ):
+    from ai_agents.adk.queue import FleetInFlight, execute
     from ai_agents.adk.runtime import list_runs
 
+    # Browser poll often hits the list, not GET /runs/{id}. Drain QUEUED rows
+    # here so a rewrite/proxy that 404s the by-id path still settles.
+    pending = [row for row in list_runs(db, org.tenant_id, limit=limit) if row.get("status") == "QUEUED"]
+    for row in pending[:10]:
+        try:
+            execute(row["run_id"], db)
+        except FleetInFlight:
+            pass
+        except KeyError:
+            pass
+        except Exception:
+            logging.getLogger("verifleet").exception("list drain failed for %s", row.get("run_id"))
     return {"tenant_id": org.tenant_id, "runs": list_runs(db, org.tenant_id, limit=limit)}
 
 

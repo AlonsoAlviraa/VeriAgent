@@ -117,11 +117,11 @@ export default function HomePage() {
   return (
     <AppShell>
       <section className="border-b border-[#e8e6e3]">
-        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-8 px-4 py-12 md:px-6 md:py-20">
+        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-8 px-4 py-12 md:px-6 md:py-16">
           <div className="max-w-[680px]">
             <p className="vf-label">{t("landing.kicker")}</p>
             <h1 className="vf-prose-hero mt-3">{t("landing.title")}</h1>
-            <p className="mt-4 max-w-[520px] text-[16px] leading-relaxed text-[#6f6e69]">
+            <p className="mt-4 max-w-[440px] text-[16px] leading-relaxed text-[#6f6e69]">
               {t("landing.description")}
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">

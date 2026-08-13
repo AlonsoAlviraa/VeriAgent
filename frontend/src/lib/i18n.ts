@@ -127,7 +127,7 @@ const en = {
   "landing.kicker": "VeriFactu fleet",
   "landing.title": "The fleet decides. The model does not write the hash.",
   "landing.description":
-    "VeriFactu fleet. Consult is tighten-only. Tools write the chain — not a chat, not a live Hacienda session.",
+    "VeriFactu fleet. Consult is tighten-only. Tools write the hash. Open the console — not a chat.",
   "landing.cta": "Open judge console",
   "landing.proofKicker": "What is true in this repo",
   "landing.proof1.title": "The LLM never writes the hash",
@@ -443,7 +443,7 @@ const es: Record<MessageKey, string> = {
   "landing.kicker": "Flota VeriFactu",
   "landing.title": "La flota decide. El modelo no escribe el hash.",
   "landing.description":
-    "Flota VeriFactu. Consult solo puede endurecer. Las tools escriben la cadena — no es un chat, ni una sesión en vivo con Hacienda.",
+    "Flota VeriFactu. Consult solo puede endurecer. Las tools escriben el hash. Abre la consola — no es un chat.",
   "landing.cta": "Abrir consola del juez",
   "landing.proofKicker": "Lo que es cierto en este repo",
   "landing.proof1.title": "El LLM no escribe el hash",

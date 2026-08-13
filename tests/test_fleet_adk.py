@@ -504,6 +504,33 @@ def test_get_run_drains_queued_row(db_session):
         app.dependency_overrides.clear()
 
 
+def test_list_runs_drains_queued_row(db_session):
+    """GET /runs (list) must settle QUEUED — browser poll often uses the list."""
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest?wait=false",
+            json={"invoice": _valid_invoice(number="513")},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        rid = res.json()["run_id"]
+        listing = client.get("/api/v1/fleet/runs", headers=headers)
+        assert listing.status_code == 200
+        found = next(r for r in listing.json()["runs"] if r["run_id"] == rid)
+        assert found["status"] == "COMPLETED"
+        assert found["decision"] == "SIGNED"
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_batch_async_queues_three(db_session):
     from ai_agents.adk.queue import execute
     from core_engine.main import app, get_db
