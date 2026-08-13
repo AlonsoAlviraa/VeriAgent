@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import QueryProvider from "@/components/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico" },
 };
 
-import QueryProvider from "@/components/providers/query-provider";
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#fbfbf9",
+};
 
 export default function RootLayout({
   children,
@@ -30,9 +34,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light" style={{ colorScheme: "only light" }}>
+      <head>
+        <meta name="color-scheme" content="only light" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ backgroundColor: "#fbfbf9", color: "#111111" }}
       >
         <QueryProvider>
           {children}
@@ -41,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+

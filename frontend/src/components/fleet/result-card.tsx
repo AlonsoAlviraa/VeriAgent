@@ -52,15 +52,15 @@ export function ResultCard({
                 : "Background 202 · settled"}
             </p>
           )}
-          <div className="mt-5">
-            <PipelineStepper run={run} />
-          </div>
         </>
       ) : (
         <p className="mt-3 text-[14px] leading-relaxed text-[#6f6e69]">
-          Ingest, consult (tighten only), then tools write the hash. The model never writes it.
+          Dispatch a fixture. Consult can only tighten. Tools write the hash.
         </p>
       )}
+      <div className="mt-5">
+        <PipelineStepper run={run} />
+      </div>
     </section>
   );
 }

@@ -120,23 +120,27 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: only light;
+  background-color: #fbfbf9;
 }
 
 body {
-  background: #fbfbf9;
-  color: var(--foreground);
+  background-color: #fbfbf9 !important;
+  color: #111111;
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .vf-app {
   isolation: isolate;
-  background: #fbfbf9;
+  background-color: #fbfbf9 !important;
+  color: #111111;
 }
 
-.vf-card {
-  background: #ffffff;
+.vf-card,
+[data-slot="card"] {
+  background-color: #ffffff !important;
+  color: #111111;
   border: 1px solid #e8e6e3;
   box-shadow: none;
 }
@@ -188,10 +192,12 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: #fbfbf9;
+    color: #111111;
   }
   html {
     @apply font-sans;
+    color-scheme: only light;
   }
 }
 

@@ -13,8 +13,17 @@ export function getActiveTenant(): string | null {
     return window.localStorage.getItem(TENANT_STORAGE_KEY);
 }
 
+export function formatApiError(error: unknown): string {
+    const err = error as { message?: string; response?: { status?: number; data?: { detail?: string; message?: string } }; code?: string };
+    if (!err?.response) {
+        return "Network Error — cannot reach the API. Start the backend on localhost:8000 (this app proxies /api/v1).";
+    }
+    return err.response.data?.detail || err.response.data?.message || err.message || "Request failed";
+}
+
 const apiClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    // Same-origin so the browser does not hit :8000 (CORS). Next rewrites /api/v1 → localhost:8000.
+    baseURL: "",
     headers: {
         "Content-Type": "application/json",
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import apiClient, { TENANT_STORAGE_KEY } from "@/lib/api-client";
+import apiClient, { TENANT_STORAGE_KEY, formatApiError } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { ControlBar } from "@/components/fleet/control-bar";
 import { FixtureGrid } from "@/components/fleet/fixture-grid";
@@ -100,7 +100,7 @@ export default function FleetPage() {
   }, [headers, tenant]);
 
   useEffect(() => {
-    refreshMeta().catch((err) => setError(String(err?.message || err)));
+    refreshMeta().catch((err) => setError(formatApiError(err)));
   }, [refreshMeta]);
 
   async function pollUntilDone(ids: string[]) {
@@ -143,7 +143,7 @@ export default function FleetPage() {
       setRun(res.data);
       await refreshMeta();
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || "PDF ingest failed");
+      setError(formatApiError(err) || "PDF ingest failed");
     } finally {
       setBusy(false);
       setActiveJob("");
@@ -168,7 +168,7 @@ export default function FleetPage() {
       }
       await refreshMeta();
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || "Ingest failed");
+      setError(formatApiError(err) || "Ingest failed");
     } finally {
       setBusy(false);
       setActiveJob("");
@@ -208,7 +208,7 @@ export default function FleetPage() {
       await pollUntilDone(ids);
       await refreshMeta();
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || "Batch failed");
+      setError(formatApiError(err) || "Batch failed");
     } finally {
       setBusy(false);
       setActiveJob("");

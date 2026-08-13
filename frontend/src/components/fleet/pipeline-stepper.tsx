@@ -79,7 +79,7 @@ function Step({
       <p
         className={cn(
           "mt-1 text-[13px] leading-snug",
-          state === "pending" ? "text-[#cfcbc4]" : "text-[#111]"
+          state === "pending" ? "text-[#6f6e69]" : "text-[#111]"
         )}
       >
         {detail}
