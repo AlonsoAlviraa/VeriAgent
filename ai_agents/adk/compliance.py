@@ -12,6 +12,7 @@ from core_engine.aeat_connector import is_aeat_remitting
 
 def checklist() -> dict:
     adk = adk_status()
+    remitting = is_aeat_remitting()
     return {
         "track": "Fortified Enterprise Fleet",
         "model": GEMINI_MODEL,
@@ -77,6 +78,16 @@ def checklist() -> dict:
                 "name": "ADK Runner",
                 "status": "implemented",
                 "proof": "run_orchestrator() → InMemoryRunner(fiscal_fleet_consult); skipped when VERIFLEET_SKIP_LLM=1; cannot loosen gates",
+            },
+            {
+                "id": "aeat",
+                "name": "AEAT remittance",
+                "status": "live" if remitting else "not_on_path",
+                "proof": (
+                    "fleet ingest is remitting to AEAT"
+                    if remitting
+                    else "aeat_remitting=false — fleet ingest signs locally and does not call AEAT"
+                ),
             },
             {
                 "id": "pubsub",

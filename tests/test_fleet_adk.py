@@ -313,7 +313,10 @@ def test_compliance_and_identity_api(db_session):
 
     sheet = checklist()
     ids = {i["id"] for i in sheet["items"]}
-    assert {"registry", "runtime", "memory", "identity", "gateway", "armor", "otel", "gemini", "adk"} <= ids
+    assert {"registry", "runtime", "memory", "identity", "gateway", "armor", "otel", "gemini", "adk", "runner", "aeat"} <= ids
+    assert sheet["aeat_remitting"] is False
+    aeat = next(i for i in sheet["items"] if i["id"] == "aeat")
+    assert aeat["status"] == "not_on_path"
     who = identity("enterprise-demo", "judge", ["auditor"])
     assert "invoice.sign" in who["denied_tools"]
     assert "aeat.submit" in who["denied_tools"]
@@ -675,6 +678,7 @@ def test_compliance_includes_runner():
 
     ids = {i["id"] for i in checklist()["items"]}
     assert "runner" in ids
+    assert "aeat" in ids
     assert checklist()["framework"] == "google-adk"
     assert checklist()["aeat_remitting"] is False
 

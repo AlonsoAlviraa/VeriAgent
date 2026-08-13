@@ -13,4 +13,9 @@ cd frontend && npm install && npm run dev
 ```
 
 UI del concurso: http://localhost:3000/fleet  
+
+```bash
+python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json
+```
+
 Disclosure y credenciales de juez: `CONTEST.md`

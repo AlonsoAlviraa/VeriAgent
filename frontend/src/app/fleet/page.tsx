@@ -5,6 +5,7 @@ import apiClient, { TENANT_STORAGE_KEY, formatApiError } from "@/lib/api-client"
 import { AppShell } from "@/components/shell/app-shell";
 import { ControlBar } from "@/components/fleet/control-bar";
 import { FixtureGrid } from "@/components/fleet/fixture-grid";
+import { AgentRoster } from "@/components/fleet/agent-roster";
 import { FleetChecklist } from "@/components/fleet/fleet-checklist";
 import { FleetHero } from "@/components/fleet/hero";
 import { IngestPanel } from "@/components/fleet/ingest-panel";
@@ -45,6 +46,7 @@ type Checklist = {
   track: string;
   framework?: string;
   model?: string;
+  aeat_remitting?: boolean;
   items: { id: string; name: string; status: string; proof: string }[];
 };
 
@@ -365,7 +367,12 @@ export default function FleetPage() {
             </div>
             <aside className="flex flex-col gap-4">
               <RecentRuns runs={history} live={run} />
-              <FleetChecklist track={checklist?.track} items={checklist?.items || []} />
+              <FleetChecklist
+                track={checklist?.track}
+                items={checklist?.items || []}
+                aeatRemitting={checklist?.aeat_remitting}
+              />
+              <AgentRoster agents={registry?.agents || null} compact />
               <ReplayHint />
             </aside>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   FileUp,
@@ -19,6 +19,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { AgentRoster, type RosterAgent } from "@/components/fleet/agent-roster";
 import type { MessageKey } from "@/lib/i18n";
 
 const PROOFS: { title: MessageKey; body: MessageKey }[] = [
@@ -35,8 +36,18 @@ export default function HomePage() {
   const [uploadStatus, setUploadStatus] = useState<"IDLE" | "UPLOADING" | "PROCESSING" | "SUCCESS" | "ERROR">("IDLE");
   const [errorMsg, setErrorMsg] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [agents, setAgents] = useState<RosterAgent[] | null>(null);
 
   const { data: auditData } = useInvoiceStatus(invoiceId);
+
+  useEffect(() => {
+    apiClient
+      .get<{ agents: RosterAgent[] }>("/api/v1/fleet/registry", {
+        headers: { "X-Tenant-Id": "enterprise-demo", "X-User-Id": "judge", "X-Roles": "issuer" },
+      })
+      .then((res) => setAgents(res.data.agents || []))
+      .catch(() => setAgents(null));
+  }, []);
 
   const setTenant = (id: string) => {
     setTenantId(id);
@@ -134,6 +145,27 @@ export default function HomePage() {
             </div>
           </div>
           <p className="text-[12px] tracking-[0.02em] text-[#6f6e69]">{t("landing.builtWith")}</p>
+        </div>
+      </section>
+
+      <AgentRoster agents={agents} />
+
+      <section className="border-b border-[#e8e6e3]">
+        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-4 px-4 py-8 md:px-6">
+          <Button
+            render={<Link href="/fleet" />}
+            nativeButton={false}
+            variant="outline"
+            className="h-10 w-full rounded-lg border-[#111] bg-[#111] px-4 text-[13px] font-medium text-white hover:bg-[#222] hover:text-white sm:w-auto"
+          >
+            {t("landing.cta")}
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+          <p className="text-[13px] text-[#6f6e69]">
+            <span className="font-medium text-[#111]">{t("demo.kicker")}</span>
+            {" — "}
+            {t("demo.pending")}
+          </p>
         </div>
       </section>
 
@@ -284,11 +316,11 @@ function ResultHead({
   body,
   badge,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   tone: "emerald" | "rose" | "amber" | "slate";
   title: string;
   body?: string;
-  badge?: React.ReactNode;
+  badge?: ReactNode;
 }) {
   const wrap = {
     emerald: "bg-[#eef8f1] text-[#17663f]",

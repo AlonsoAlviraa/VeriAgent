@@ -12,6 +12,7 @@ export const FIXTURES = [
     id: "valid",
     labelKey: "fixtures.valid" as const satisfies MessageKey,
     hintKey: "fixtures.validHint" as const satisfies MessageKey,
+    jobKey: "fixtures.job.valid" as const satisfies MessageKey,
     path: "/demo-fixtures/valid_invoice.json",
     expect: "SIGNED" as const,
     icon: FileCheck2,
@@ -20,6 +21,7 @@ export const FIXTURES = [
     id: "math",
     labelKey: "fixtures.math" as const satisfies MessageKey,
     hintKey: "fixtures.mathHint" as const satisfies MessageKey,
+    jobKey: "fixtures.job.math" as const satisfies MessageKey,
     path: "/demo-fixtures/math_error.json",
     expect: "ESCALATED" as const,
     icon: Calculator,
@@ -28,6 +30,7 @@ export const FIXTURES = [
     id: "injection",
     labelKey: "fixtures.injection" as const satisfies MessageKey,
     hintKey: "fixtures.injectionHint" as const satisfies MessageKey,
+    jobKey: "fixtures.job.injection" as const satisfies MessageKey,
     path: "/demo-fixtures/injection.json",
     expect: "BLOCKED" as const,
     icon: Bug,
@@ -36,6 +39,7 @@ export const FIXTURES = [
     id: "hospitality",
     labelKey: "fixtures.hospitality" as const satisfies MessageKey,
     hintKey: "fixtures.hospitalityHint" as const satisfies MessageKey,
+    jobKey: "fixtures.job.hospitality" as const satisfies MessageKey,
     path: "/demo-fixtures/hospitality.json",
     expect: "ESCALATED" as const,
     icon: UtensilsCrossed,
@@ -69,7 +73,8 @@ export function FixtureGrid({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-[15px] leading-tight font-medium text-[#111]">
+                  <p className="vf-label">{t(fixture.jobKey)}</p>
+                  <h3 className="mt-1 text-[15px] leading-tight font-medium text-[#111]">
                     {t(fixture.labelKey)}
                   </h3>
                   <p className="mt-1 text-[12px] text-[#6f6e69]">{fixture.expect}</p>

@@ -69,7 +69,17 @@ Optional Postgres: `docker compose up db -d`.
 cd frontend && npm install && npm run dev
 ```
 
-Open **http://localhost:3000/fleet**
+Open **http://localhost:3000/fleet** — that is the operator console. Landing (`/`) only sells and links here.
+
+```bash
+python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json
+```
+
+Prints `SIGNED` and a shortened hash (`first8…last8`). Same local ingest as `/fleet`. Never prints API keys.
+
+This repo does **not** ship a hosted Cloud Run URL. Deploy is a human step (`infra/README.md`) after you have a billed project.
+
+| Header | Judge value |
 
 | Header | Judge value |
 |---|---|
@@ -83,7 +93,7 @@ python -m pytest tests/test_fleet_adk.py tests/test_api.py -q
 
 ## Deploy (Google Cloud)
 
-See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $150 credits). After deploy, the Cloud Run URL is the hosted project for Devpost.
+See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $150 credits). Do not invent a `*.run.app` URL in docs or the UI until a human deploy exists.
 
 ## Docs
 

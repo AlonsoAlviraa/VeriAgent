@@ -16,11 +16,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "VeriFleet — Fortified Enterprise Fleet",
+    default: "The LLM never writes the hash — VeriFleet",
     template: "%s · VeriFleet",
   },
   description:
     "VeriFactu fleet. Consult is tighten-only. Tools write the hash. The LLM never writes the hash.",
+  openGraph: {
+    title: "The LLM never writes the hash — VeriFleet",
+    description:
+      "VeriFactu fleet. Consult is tighten-only. Tools write the hash. The LLM never writes the hash.",
+  },
   icons: { icon: "/favicon.ico" },
 };
 
