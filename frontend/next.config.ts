@@ -1,16 +1,19 @@
 import type { NextConfig } from "next";
 
-const backend =
+const backend = (
   process.env.BACKEND_URL ||
   process.env.API_PROXY_TARGET ||
-  "http://localhost:8000";
+  "http://127.0.0.1:8000"
+)
+  .replace(/\/$/, "")
+  .replace("://localhost", "://127.0.0.1");
 
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${backend.replace(/\/$/, "")}/api/v1/:path*`,
+        destination: `${backend}/api/v1/:path*`,
       },
     ];
   },

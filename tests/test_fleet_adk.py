@@ -453,6 +453,54 @@ def test_async_ingest_api_202(db_session):
         app.dependency_overrides.clear()
 
 
+def test_ingest_wait_false_in_json_body(db_session):
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest",
+            json={"invoice": _valid_invoice(number="511"), "wait": False},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        assert res.json()["status"] == "QUEUED"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_get_run_drains_queued_row(db_session):
+    """Poll GET /runs/{id} must complete a QUEUED row (FIFO may live on another worker)."""
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest?wait=false",
+            json={"invoice": _valid_invoice(number="512")},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        rid = res.json()["run_id"]
+        assert runtime.get_run(db_session, rid, tenant_id="default")["status"] == "QUEUED"
+        got = client.get(f"/api/v1/fleet/runs/{rid}", headers=headers)
+        assert got.status_code == 200
+        assert got.json()["status"] == "COMPLETED"
+        assert got.json()["decision"] == "SIGNED"
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_batch_async_queues_three(db_session):
     from ai_agents.adk.queue import execute
     from core_engine.main import app, get_db

@@ -8,7 +8,7 @@ Arranque local:
 
 ```bash
 pip install -r requirements.txt
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend && npm install && npm run dev
 ```
 

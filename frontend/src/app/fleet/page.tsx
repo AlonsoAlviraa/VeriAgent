@@ -129,7 +129,14 @@ export default function FleetPage() {
         const res = await apiClient.get<FleetRun>(`/api/v1/fleet/runs/${id}`, { headers: headers() });
         return res.data;
       } catch {
-        return null;
+        try {
+          const list = await apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", {
+            headers: headers(),
+          });
+          return (list.data.runs || []).find((row) => row.run_id === id) || null;
+        } catch {
+          return null;
+        }
       }
     },
     [headers]
@@ -230,11 +237,11 @@ export default function FleetPage() {
     setBusy(true);
     setError(null);
     try {
-      const path = background ? "/api/v1/fleet/ingest?wait=false" : "/api/v1/fleet/ingest";
+      const wait = !background;
       const res = await apiClient.post<FleetRun>(
-        path,
-        { invoice: stampNumber(invoice as Record<string, unknown>) },
-        { headers: headers() }
+        "/api/v1/fleet/ingest",
+        { invoice: stampNumber(invoice as Record<string, unknown>), wait },
+        { headers: headers(), params: { wait } }
       );
       if (background && (res.status === 202 || isPendingStatus(res.data.status))) {
         setRun(res.data);
@@ -276,14 +283,17 @@ export default function FleetPage() {
         stampNumber(FALLBACK["/demo-fixtures/math_error.json"] as Record<string, unknown>),
         stampNumber(FALLBACK["/demo-fixtures/injection.json"] as Record<string, unknown>),
       ];
+      const wait = !background;
       const res = await apiClient.post<{ runs?: FleetRun[]; run_ids?: string[] }>(
-        "/api/v1/fleet/ingest/batch?wait=false",
-        { invoices },
-        { headers: headers() }
+        "/api/v1/fleet/ingest/batch",
+        { invoices, wait },
+        { headers: headers(), params: { wait } }
       );
       const ids = res.data.run_ids || (res.data.runs || []).map((r) => r.run_id);
-      if (res.data.runs?.[0]) setRun(res.data.runs[0]);
-      else if (ids[0]) {
+      if (res.data.runs?.[0]) {
+        setRun(res.data.runs[0]);
+        setHistory((prev) => mergeRuns(prev, res.data.runs || []));
+      } else if (ids[0]) {
         setRun({
           run_id: ids[0],
           tenant_id: tenant,
@@ -292,8 +302,10 @@ export default function FleetPage() {
           reason: "",
         });
       }
-      const settled = await pollUntilDone(ids);
-      if (!settled) setError({ kind: "key", key: "error.queueStuck" });
+      if (background || res.status === 202 || (res.data.runs || []).some((row) => isPendingStatus(row.status))) {
+        const settled = await pollUntilDone(ids);
+        if (!settled) setError({ kind: "key", key: "error.queueStuck" });
+      }
       await refreshMeta();
     } catch (err: any) {
       setError({ kind: "api", err, fallback: "error.batch" });

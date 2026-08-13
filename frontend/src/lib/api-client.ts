@@ -22,8 +22,16 @@ export function formatApiError(error: unknown, locale: Locale = "es"): string {
     return err.response.data?.detail || err.response.data?.message || err.message || t(locale, "error.requestFailed");
 }
 
+function readHeader(headers: unknown, name: string): string {
+    if (!headers || typeof headers !== "object") return "";
+    const bag = headers as { get?: (key: string) => unknown; [key: string]: unknown };
+    const fromGet = typeof bag.get === "function" ? bag.get(name) : undefined;
+    const value = fromGet ?? bag[name] ?? bag[name.toLowerCase()];
+    return value == null ? "" : String(value);
+}
+
 const apiClient = axios.create({
-    // Same-origin so the browser does not hit :8000 (CORS). Next rewrites /api/v1 → localhost:8000.
+    // Same-origin so the browser does not hit :8000 (CORS). Next proxies /api/v1 → 127.0.0.1:8000.
     baseURL: "",
     headers: {
         "Content-Type": "application/json",
@@ -35,8 +43,7 @@ apiClient.interceptors.request.use((config) => {
     const tenantId = getActiveTenant();
     if (tenantId) {
         config.headers = config.headers ?? {};
-        const already = config.headers["X-Tenant-Id"] ?? config.headers["x-tenant-id"];
-        if (!already) {
+        if (!readHeader(config.headers, "X-Tenant-Id")) {
             config.headers["X-Tenant-Id"] = tenantId;
         }
     }

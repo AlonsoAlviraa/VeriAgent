@@ -5,9 +5,11 @@
 ```bash
 set DATABASE_URL=sqlite:///verifleet.db
 set VERIAGENT_AUTO_INIT_DB=1
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend && npm run dev
 ```
+
+One uvicorn only, bind **127.0.0.1**. Restart it after pulling backend queue changes (in-memory FIFO does not survive two worker processes).
 
 Open http://localhost:3000/fleet  
 Headers the UI sets: `X-Tenant-Id: enterprise-demo`, `X-User-Id: judge`, `X-Roles: issuer`

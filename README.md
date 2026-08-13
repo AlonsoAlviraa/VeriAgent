@@ -57,8 +57,10 @@ pip install -r requirements.txt
 
 set DATABASE_URL=sqlite:///verifleet.db
 set VERIAGENT_AUTO_INIT_DB=1
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+One process only (`--workers 1` is the default). Do not start a second uvicorn. Bind **127.0.0.1** (not `localhost`/IPv6) so the Next.js proxy and curl hit the same FIFO. After pulling queue/proxy changes, **stop both leftover PIDs and restart** uvicorn so the worker code loads.
 
 Unix: `export DATABASE_URL=sqlite:///verifleet.db` and `export VERIAGENT_AUTO_INIT_DB=1`.
 Optional Postgres: `docker compose up db -d`.
