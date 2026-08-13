@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   FileUp,
@@ -11,7 +12,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { CSVDisplay } from "@/components/ui/csv-display";
 import { useInvoiceStatus } from "@/hooks/use-invoice";
 import apiClient, { TENANT_STORAGE_KEY } from "@/lib/api-client";
 import { InvoiceStatus } from "@/lib/types/api";
@@ -21,6 +21,11 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { AgentRoster, type RosterAgent } from "@/components/fleet/agent-roster";
 import type { MessageKey } from "@/lib/i18n";
+
+const CSVDisplay = dynamic(
+  () => import("@/components/ui/csv-display").then((mod) => ({ default: mod.CSVDisplay })),
+  { ssr: false }
+);
 
 const PROOFS: { title: MessageKey; body: MessageKey }[] = [
   { title: "landing.proof1.title", body: "landing.proof1.body" },
