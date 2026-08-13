@@ -14,6 +14,11 @@ import { ReplayHint } from "@/components/fleet/replay-hint";
 import { ResultCard } from "@/components/fleet/result-card";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { JUDGE_BANNER, type MessageKey } from "@/lib/i18n";
+import {
+  RUNS_LIST_LIMIT,
+  isPendingStatus,
+  pollUntilSettled,
+} from "@/lib/poll";
 
 type FleetRun = FleetRunView & {
   tenant_id: string;
@@ -62,17 +67,19 @@ function stampNumber(invoice: Record<string, unknown>): Record<string, unknown> 
   return { ...invoice, number: `${invoice.number}-${Date.now().toString().slice(-6)}` };
 }
 
-function isPendingStatus(status?: string) {
-  return status === "QUEUED" || status === "RUNNING";
-}
-
 function mergeRuns(prev: FleetRun[], incoming: FleetRun[]): FleetRun[] {
   const map = new Map(prev.map((row) => [row.run_id, row]));
   for (const row of incoming) {
     if (!row?.run_id) continue;
     map.set(row.run_id, { ...map.get(row.run_id), ...row });
   }
-  return Array.from(map.values());
+  const incomingIds = new Set(incoming.map((row) => row.run_id).filter(Boolean));
+  const head = incoming
+    .filter((row) => row?.run_id)
+    .map((row) => map.get(row.run_id)!)
+    .filter(Boolean);
+  const rest = prev.filter((row) => row?.run_id && !incomingIds.has(row.run_id));
+  return [...head, ...rest].slice(0, RUNS_LIST_LIMIT);
 }
 
 type PageError =
@@ -106,40 +113,44 @@ export default function FleetPage() {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(TENANT_STORAGE_KEY, tenant);
     }
-    const [reg, , comp, idn, runs] = await Promise.all([
+    const [reg, comp, idn, runs] = await Promise.all([
       apiClient.get<Registry>("/api/v1/fleet/registry", { headers: headers() }),
-      apiClient.get<{ memories: Record<string, string> }>("/api/v1/fleet/memory", {
-        headers: headers(),
-      }),
       apiClient.get<Checklist>("/api/v1/fleet/compliance", { headers: headers() }),
       apiClient.get<Identity>("/api/v1/fleet/identity", { headers: headers() }),
-      apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", { headers: headers() }),
+      apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", {
+        headers: headers(),
+        params: { limit: RUNS_LIST_LIMIT },
+      }),
     ]);
     setRegistry(reg.data);
     setChecklist(comp.data);
     setIdentity(idn.data);
-    setHistory(runs.data.runs || []);
+    setHistory((runs.data.runs || []).slice(0, RUNS_LIST_LIMIT));
   }, [headers, tenant]);
 
   useEffect(() => {
     refreshMeta().catch((err) => setError({ kind: "api", err, fallback: "error.requestFailed" }));
   }, [refreshMeta]);
 
-  const fetchRun = useCallback(
-    async (id: string): Promise<FleetRun | null> => {
-      try {
-        const res = await apiClient.get<FleetRun>(`/api/v1/fleet/runs/${id}`, { headers: headers() });
-        return res.data;
-      } catch {
+  const fetchRows = useCallback(
+    async (ids: string[]): Promise<FleetRun[]> => {
+      const wanted = ids.filter(Boolean);
+      if (!wanted.length) return [];
+      const listParams = { headers: headers(), params: { limit: RUNS_LIST_LIMIT } };
+      if (wanted.length === 1) {
         try {
-          const list = await apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", {
+          const res = await apiClient.get<FleetRun>(`/api/v1/fleet/runs/${wanted[0]}`, {
             headers: headers(),
           });
-          return (list.data.runs || []).find((row) => row.run_id === id) || null;
+          return res.data ? [res.data] : [];
         } catch {
-          return null;
+          const list = await apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", listParams);
+          return (list.data.runs || []).filter((row) => row.run_id === wanted[0]);
         }
       }
+      const list = await apiClient.get<{ runs: FleetRun[] }>("/api/v1/fleet/runs", listParams);
+      const match = new Set(wanted);
+      return (list.data.runs || []).filter((row) => match.has(row.run_id));
     },
     [headers]
   );
@@ -154,59 +165,52 @@ export default function FleetPage() {
   const pendingKey = pendingIds.join(",");
 
   useEffect(() => {
-    if (!pendingKey) return;
+    if (!pendingKey || busy) return;
     const ids = pendingKey.split(",");
     let cancelled = false;
-    const started = Date.now();
 
-    const tick = async () => {
-      const rows = (await Promise.all(ids.map(fetchRun))).filter(Boolean) as FleetRun[];
-      if (cancelled || !rows.length) return;
-      setHistory((prev) => mergeRuns(prev, rows));
-      setRun((current) => {
-        const live = (current && rows.find((row) => row.run_id === current.run_id)) || rows[0];
-        return live ? { ...current, ...live } : current;
-      });
-      const still = rows.some((row) => isPendingStatus(row.status));
-      if (!still) {
-        setError((prev) => (prev?.kind === "key" && prev.key === "error.queueStuck" ? null : prev));
-        return;
-      }
-      if (Date.now() - started >= 45000) {
-        setError({ kind: "key", key: "error.queueStuck" });
-      }
-    };
+    void pollUntilSettled({
+      ids,
+      fetchRows,
+      continueAfterTimeout: true,
+      isCancelled: () => cancelled,
+      onTimeout: () => {
+        if (!cancelled) setError({ kind: "key", key: "error.queueStuck" });
+      },
+      onTick: (rows) => {
+        if (cancelled || !rows.length) return;
+        setHistory((prev) => mergeRuns(prev, rows));
+        setRun((current) => {
+          const live = (current && rows.find((row) => row.run_id === current.run_id)) || rows[0];
+          return live ? { ...current, ...live } : current;
+        });
+        const still = rows.some((row) => isPendingStatus(row.status));
+        if (!still) {
+          setError((prev) => (prev?.kind === "key" && prev.key === "error.queueStuck" ? null : prev));
+        }
+      },
+    });
 
-    const timer = window.setInterval(() => {
-      void tick();
-    }, 1000);
-    void tick();
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
     };
-  }, [pendingKey, fetchRun]);
+  }, [pendingKey, fetchRows, busy]);
 
   async function pollUntilDone(ids: string[]) {
-    if (!ids.length) return false;
-    const deadline = Date.now() + 90000;
-    let last: FleetRun | null = null;
-    while (Date.now() < deadline) {
-      const rows = (await Promise.all(ids.map(fetchRun))).filter(Boolean) as FleetRun[];
-      if (rows.length) {
-        last = rows[rows.length - 1];
-        setRun(last);
+    const result = await pollUntilSettled({
+      ids,
+      fetchRows,
+      onTick: (rows) => {
+        if (!rows.length) return;
+        const last = rows[rows.length - 1];
+        setRun((current) => {
+          const live = (current && rows.find((row) => row.run_id === current.run_id)) || last;
+          return live ? { ...current, ...live } : last;
+        });
         setHistory((prev) => mergeRuns(prev, rows));
-      }
-      const pending = rows.some((row) => isPendingStatus(row.status));
-      if (!pending && rows.length === ids.length) {
-        if (last) setRun(last);
-        return true;
-      }
-      await new Promise((r) => setTimeout(r, 400));
-    }
-    if (last) setRun(last);
-    return false;
+      },
+    });
+    return result.settled;
   }
 
   async function ingestPdf() {

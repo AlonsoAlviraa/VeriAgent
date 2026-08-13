@@ -207,4 +207,7 @@ body {
     opacity: 1 !important;
     transform: none !important;
   }
+  .animate-spin {
+    animation: none !important;
+  }
 }

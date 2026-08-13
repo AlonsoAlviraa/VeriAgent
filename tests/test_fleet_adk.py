@@ -308,6 +308,55 @@ def test_list_runs_is_tenant_scoped(db_session):
     assert len(b) == 1 and b[0]["tenant_id"] == "bbb"
 
 
+def test_list_runs_caps_at_last_20(db_session):
+    from core_engine.db.fleet_models import FleetRunModel
+
+    for i in range(25):
+        db_session.add(
+            FleetRunModel(
+                tenant_id="cap-20",
+                status="COMPLETED",
+                decision="SIGNED",
+                reason=f"row-{i}",
+            )
+        )
+    db_session.commit()
+    assert len(runtime.list_runs(db_session, "cap-20")) == 20
+    assert len(runtime.list_runs(db_session, "cap-20", limit=20)) == 20
+    assert len(runtime.list_runs(db_session, "cap-20", limit=5)) == 5
+
+
+def test_list_runs_api_default_limit_20(db_session):
+    from core_engine.db.fleet_models import FleetRunModel
+    from core_engine.main import app, get_db
+
+    for i in range(25):
+        db_session.add(
+            FleetRunModel(
+                tenant_id="default",
+                status="COMPLETED",
+                decision="SIGNED",
+                reason=f"api-{i}",
+            )
+        )
+    db_session.commit()
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        default = client.get("/api/v1/fleet/runs", headers=headers)
+        assert default.status_code == 200
+        assert len(default.json()["runs"]) == 20
+        limited = client.get("/api/v1/fleet/runs?limit=20", headers=headers)
+        assert len(limited.json()["runs"]) == 20
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_compliance_and_identity_api(db_session):
     from ai_agents.adk.compliance import checklist, identity
 
