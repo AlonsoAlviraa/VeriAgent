@@ -48,7 +48,7 @@ export function AppShell({
           </nav>
 
           <p className="ml-auto hidden truncate text-[12px] text-[#6f6e69] sm:block">
-            google-adk · gemini-3.5-flash
+            Judge console
           </p>
         </div>
         {right ? <div className="mx-auto hidden max-w-[1120px] px-4 pb-3 md:block md:px-6">{right}</div> : null}

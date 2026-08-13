@@ -94,15 +94,15 @@ export default function AuditPage() {
   return (
     <AppShell>
       <FleetHero
-        kicker="Audit"
+        kicker="The LLM never writes the hash."
         title="Check an invoice before the fleet signs it."
-        description="Upload a PDF or XML to extract fields. Open the judge console to dispatch fixtures that sign, escalate, or block — the model never writes the hash."
+        description="Upload a PDF or XML to extract fields. Then open the judge console and dispatch a fixture — you’ll see the verdict and hash, not a chat."
         actions={
           <Button
             render={<Link href="/fleet" />}
             nativeButton={false}
             size="lg"
-            className="h-10 rounded-md bg-[#18794e] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#111]"
+            className="h-10 rounded-md bg-[#111] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#18794e]"
           >
             Open judge console
             <ArrowRight data-icon="inline-end" />

@@ -52,15 +52,14 @@ export function FixtureGrid({
       <h2 className="text-[15px] font-medium tracking-tight text-[#111]">Fixtures</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {FIXTURES.map((fixture, index) => {
+        {FIXTURES.map((fixture) => {
           const Icon = fixture.icon;
           const active = busy && activeJob === fixture.path;
           return (
             <Card
               key={fixture.id}
               size="sm"
-              style={{ animationDelay: `${index * 80}ms` }}
-              className="vf-card vf-rise gap-0 rounded-lg p-4 ring-0 transition-transform duration-200 hover:-translate-y-0.5"
+              className="vf-card gap-0 rounded-lg p-4 ring-0 transition-transform duration-150 hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

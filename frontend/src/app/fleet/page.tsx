@@ -1,16 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import apiClient, { TENANT_STORAGE_KEY } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
-import { AgentIdentity } from "@/components/fleet/agent-identity";
 import { ControlBar } from "@/components/fleet/control-bar";
 import { FixtureGrid } from "@/components/fleet/fixture-grid";
 import { FleetChecklist } from "@/components/fleet/fleet-checklist";
-import { FleetHero, type SettleSignal } from "@/components/fleet/hero";
+import { FleetHero } from "@/components/fleet/hero";
 import { IngestPanel } from "@/components/fleet/ingest-panel";
 import { RecentRuns, type FleetRunView } from "@/components/fleet/recent-runs";
-import { asVerdict } from "@/components/fleet/verdict";
+import { ReplayHint } from "@/components/fleet/replay-hint";
+import { ResultCard } from "@/components/fleet/result-card";
 
 type FleetRun = FleetRunView & {
   tenant_id: string;
@@ -70,10 +70,6 @@ export default function FleetPage() {
   const [activeJob, setActiveJob] = useState("");
   const [error, setError] = useState("");
   const [background, setBackground] = useState(false);
-  const [lastSettled, setLastSettled] = useState<SettleSignal | null>(null);
-  const [completedIds, setCompletedIds] = useState<string[]>([]);
-  const seenSettled = useRef<Set<string>>(new Set());
-  const primedHistory = useRef(false);
 
   const headers = useCallback(
     () => ({
@@ -100,12 +96,7 @@ export default function FleetPage() {
     setRegistry(reg.data);
     setChecklist(comp.data);
     setIdentity(idn.data);
-    const rows = runs.data.runs || [];
-    setHistory(rows);
-    if (!primedHistory.current) {
-      for (const row of rows) seenSettled.current.add(row.run_id);
-      primedHistory.current = true;
-    }
+    setHistory(runs.data.runs || []);
   }, [headers, tenant]);
 
   useEffect(() => {
@@ -233,22 +224,9 @@ export default function FleetPage() {
     };
   }, [history]);
 
-  const runner = registry?.adk?.runner || registry?.runner || "InMemoryRunner";
-
-  useEffect(() => {
-    const rows = run ? [run, ...history] : history;
-    for (const row of rows) {
-      if (row.status === "QUEUED" || row.status === "RUNNING") continue;
-      if (seenSettled.current.has(row.run_id)) continue;
-      seenSettled.current.add(row.run_id);
-      setLastSettled({ verdict: asVerdict(row.decision), tick: Date.now() });
-      setCompletedIds((ids) => (ids.includes(row.run_id) ? ids : [...ids, row.run_id]));
-    }
-  }, [run, history]);
-
   return (
     <AppShell>
-      <FleetHero counters={kpis} lastSettled={lastSettled} />
+      <FleetHero counters={kpis} />
       <ControlBar
         tenant={tenant}
         onTenantChange={setTenant}
@@ -271,28 +249,19 @@ export default function FleetPage() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="flex flex-col gap-6">
-            <FixtureGrid busy={busy} activeJob={activeJob} onDispatch={loadFixture} />
-            <IngestPanel busy={busy} activeJob={activeJob} onUpload={ingestPdf} onSweep={runSweep} />
-          </div>
-          <aside className="flex flex-col gap-4">
-            <div className="vf-rise" style={{ animationDelay: "120ms" }}>
-              <RecentRuns runs={history} live={run} runner={runner} completedIds={completedIds} />
+        <div className="flex flex-col gap-6">
+          <ResultCard run={run} background202={background} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="flex flex-col gap-6">
+              <FixtureGrid busy={busy} activeJob={activeJob} onDispatch={loadFixture} />
+              <IngestPanel busy={busy} activeJob={activeJob} onUpload={ingestPdf} onSweep={runSweep} />
             </div>
-            <div className="vf-rise" style={{ animationDelay: "200ms" }}>
+            <aside className="flex flex-col gap-4">
+              <RecentRuns runs={history} live={run} />
               <FleetChecklist track={checklist?.track} items={checklist?.items || []} />
-            </div>
-            <div className="vf-rise" style={{ animationDelay: "280ms" }}>
-              <AgentIdentity
-                tenant={tenant}
-                role={role}
-                userId={identity?.user_id}
-                allowed={identity?.allowed_tools || []}
-                denied={identity?.denied_tools || []}
-              />
-            </div>
-          </aside>
+              <ReplayHint />
+            </aside>
+          </div>
         </div>
       </main>
     </AppShell>
