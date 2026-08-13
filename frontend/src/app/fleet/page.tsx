@@ -11,6 +11,8 @@ import { IngestPanel } from "@/components/fleet/ingest-panel";
 import { RecentRuns, type FleetRunView } from "@/components/fleet/recent-runs";
 import { ReplayHint } from "@/components/fleet/replay-hint";
 import { ResultCard } from "@/components/fleet/result-card";
+import { useLocale } from "@/components/i18n/locale-provider";
+import { JUDGE_BANNER, type MessageKey } from "@/lib/i18n";
 
 type FleetRun = FleetRunView & {
   tenant_id: string;
@@ -58,7 +60,12 @@ function stampNumber(invoice: Record<string, unknown>): Record<string, unknown> 
   return { ...invoice, number: `${invoice.number}-${Date.now().toString().slice(-6)}` };
 }
 
+type PageError =
+  | { kind: "api"; err: unknown; fallback: MessageKey }
+  | { kind: "key"; key: MessageKey; vars?: Record<string, string> };
+
 export default function FleetPage() {
+  const { locale, t } = useLocale();
   const [tenant, setTenant] = useState("enterprise-demo");
   const [role, setRole] = useState("issuer");
   const [registry, setRegistry] = useState<Registry | null>(null);
@@ -68,7 +75,7 @@ export default function FleetPage() {
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [busy, setBusy] = useState(false);
   const [activeJob, setActiveJob] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<PageError | null>(null);
   const [background, setBackground] = useState(false);
 
   const headers = useCallback(
@@ -100,7 +107,7 @@ export default function FleetPage() {
   }, [headers, tenant]);
 
   useEffect(() => {
-    refreshMeta().catch((err) => setError(formatApiError(err)));
+    refreshMeta().catch((err) => setError({ kind: "api", err, fallback: "error.requestFailed" }));
   }, [refreshMeta]);
 
   async function pollUntilDone(ids: string[]) {
@@ -127,7 +134,7 @@ export default function FleetPage() {
   async function ingestPdf() {
     setBusy(true);
     setActiveJob("pdf");
-    setError("");
+    setError(null);
     try {
       const blob = await (await fetch("/demo-fixtures/valid_invoice.pdf")).blob();
       const form = new FormData();
@@ -143,7 +150,7 @@ export default function FleetPage() {
       setRun(res.data);
       await refreshMeta();
     } catch (err: any) {
-      setError(formatApiError(err) || "PDF ingest failed");
+      setError({ kind: "api", err, fallback: "error.pdfIngest" });
     } finally {
       setBusy(false);
       setActiveJob("");
@@ -152,7 +159,7 @@ export default function FleetPage() {
 
   async function ingest(invoice: object) {
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       const path = background ? "/api/v1/fleet/ingest?wait=false" : "/api/v1/fleet/ingest";
       const res = await apiClient.post<FleetRun>(
@@ -168,7 +175,7 @@ export default function FleetPage() {
       }
       await refreshMeta();
     } catch (err: any) {
-      setError(formatApiError(err) || "Ingest failed");
+      setError({ kind: "api", err, fallback: "error.ingest" });
     } finally {
       setBusy(false);
       setActiveJob("");
@@ -181,7 +188,7 @@ export default function FleetPage() {
     const fallback = FALLBACK[path];
     if (!res.ok) {
       if (fallback) return ingest(fallback);
-      setError(`Could not load ${path}`);
+      setError({ kind: "key", key: "error.loadFixture", vars: { path } });
       setActiveJob("");
       return;
     }
@@ -191,7 +198,7 @@ export default function FleetPage() {
   async function runSweep() {
     setBusy(true);
     setActiveJob("sweep");
-    setError("");
+    setError(null);
     try {
       const invoices = [
         stampNumber(FALLBACK["/demo-fixtures/valid_invoice.json"] as Record<string, unknown>),
@@ -208,7 +215,7 @@ export default function FleetPage() {
       await pollUntilDone(ids);
       await refreshMeta();
     } catch (err: any) {
-      setError(formatApiError(err) || "Batch failed");
+      setError({ kind: "api", err, fallback: "error.batch" });
     } finally {
       setBusy(false);
       setActiveJob("");
@@ -226,7 +233,12 @@ export default function FleetPage() {
 
   return (
     <AppShell>
-      <FleetHero counters={kpis} />
+      <FleetHero
+        title={JUDGE_BANNER}
+        subtitleEs={locale === "es" ? t("hero.subtitleEs") : undefined}
+        description={t("hero.description")}
+        counters={kpis}
+      />
       <ControlBar
         tenant={tenant}
         onTenantChange={setTenant}
@@ -240,12 +252,14 @@ export default function FleetPage() {
       <main className="mx-auto w-full max-w-[1120px] px-4 py-6 md:px-6 md:py-8">
         {error && (
           <p className="mb-4 rounded-lg border border-[#f0c7c3] bg-[#fbefee] px-4 py-3 text-sm text-[#9b2c2c]">
-            {error}
+            {error.kind === "key"
+              ? t(error.key, error.vars)
+              : formatApiError(error.err, locale) || t(error.fallback)}
           </p>
         )}
         {role === "auditor" && (
           <p className="mb-4 rounded-lg border border-[#f3d5b0] bg-[#fbf3e8] px-4 py-3 text-sm text-[#9a4d09]">
-            Auditor role cannot sign. Denied: {(identity?.denied_tools || []).join(", ") || "invoice.sign"}.
+            {t("auditor.banner", { tools: (identity?.denied_tools || []).join(", ") || "invoice.sign" })}
           </p>
         )}
 

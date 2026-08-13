@@ -1,7 +1,10 @@
+"use client";
+
 import { useRef, useState } from "react";
 import { Layers, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/i18n/locale-provider";
 
 export function IngestPanel({
   busy,
@@ -14,6 +17,7 @@ export function IngestPanel({
   onUpload: () => void;
   onSweep: () => void;
 }) {
+  const { t } = useLocale();
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,11 +30,11 @@ export function IngestPanel({
   };
 
   return (
-    <section aria-label="Invoice ingest" className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_minmax(0,200px)]">
+    <section aria-label={t("ingest.aria")} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_minmax(0,200px)]">
       <div
         role="button"
         tabIndex={0}
-        aria-label="Upload valid invoice PDF"
+        aria-label={t("ingest.uploadAria")}
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -57,9 +61,9 @@ export function IngestPanel({
       >
         <UploadCloud className="size-5 text-[#6f6e69]" />
         <span className="text-[14px] font-medium text-[#111]">
-          {uploading ? "Uploading valid_invoice.pdf…" : fileName || "Drop a valid invoice PDF"}
+          {uploading ? t("ingest.uploading") : fileName || t("ingest.drop")}
         </span>
-        <span className="text-[12px] text-[#6f6e69]">or click to browse</span>
+        <span className="text-[12px] text-[#6f6e69]">{t("ingest.browse")}</span>
         <input
           ref={inputRef}
           type="file"
@@ -78,7 +82,7 @@ export function IngestPanel({
         className="h-auto min-h-[120px] w-full justify-center gap-2 rounded-lg bg-[#111] py-4 text-[12px] font-medium tracking-[0.12em] text-white uppercase transition-colors duration-150 hover:bg-emerald-400 hover:text-[#04180f] disabled:opacity-50"
       >
         <Layers data-icon="inline-start" aria-hidden />
-        {sweeping ? "Sweep running…" : "3-invoice sweep"}
+        {sweeping ? t("ingest.sweeping") : t("ingest.sweep")}
       </Button>
     </section>
   );

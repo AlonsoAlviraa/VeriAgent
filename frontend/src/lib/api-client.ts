@@ -1,4 +1,5 @@
 import axios from "axios";
+import { t, type Locale } from "./i18n";
 
 /**
  * [FE-002] Configured Axios instance for VeriAgent Backend.
@@ -13,12 +14,12 @@ export function getActiveTenant(): string | null {
     return window.localStorage.getItem(TENANT_STORAGE_KEY);
 }
 
-export function formatApiError(error: unknown): string {
+export function formatApiError(error: unknown, locale: Locale = "es"): string {
     const err = error as { message?: string; response?: { status?: number; data?: { detail?: string; message?: string } }; code?: string };
     if (!err?.response) {
-        return "Network Error — cannot reach the API. Start the backend on localhost:8000 (this app proxies /api/v1).";
+        return t(locale, "error.network");
     }
-    return err.response.data?.detail || err.response.data?.message || err.message || "Request failed";
+    return err.response.data?.detail || err.response.data?.message || err.message || t(locale, "error.requestFailed");
 }
 
 const apiClient = axios.create({

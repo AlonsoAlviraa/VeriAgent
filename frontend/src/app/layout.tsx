@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/query-provider";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: "only light" }}>
+    <html lang="es" className="light" style={{ colorScheme: "only light" }}>
       <head>
         <meta name="color-scheme" content="only light" />
       </head>
@@ -43,7 +44,7 @@ export default function RootLayout({
         style={{ backgroundColor: "#fbfbf9", color: "#111111" }}
       >
         <QueryProvider>
-          {children}
+          <LocaleProvider>{children}</LocaleProvider>
         </QueryProvider>
       </body>
     </html>

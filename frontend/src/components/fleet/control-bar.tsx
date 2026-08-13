@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -7,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useLocale } from "@/components/i18n/locale-provider";
 
 const TENANTS = [
   { label: "enterprise-demo", value: "enterprise-demo" },
@@ -39,11 +42,13 @@ export function ControlBar({
   onBackground202Change: (value: boolean) => void;
   userId?: string;
 }) {
+  const { t } = useLocale();
+
   return (
-    <section aria-label="Console controls" className="border-b border-[#e8e6e3]">
+    <section aria-label={t("control.aria")} className="border-b border-[#e8e6e3]">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-4 py-3 md:px-6">
         <div className="vf-chip min-h-11 min-w-0 md:min-h-8">
-          <span>Tenant</span>
+          <span>{t("control.tenant")}</span>
           <Select items={TENANTS} value={tenant} onValueChange={(value) => onTenantChange(String(value))}>
             <SelectTrigger id="tenant" size="default" className={chipSelect}>
               <SelectValue />
@@ -61,7 +66,7 @@ export function ControlBar({
         </div>
 
         <div className="vf-chip min-h-11 min-w-0 md:min-h-8">
-          <span>Role</span>
+          <span>{t("control.role")}</span>
           <Select items={ROLES} value={role} onValueChange={(value) => onRoleChange(String(value))}>
             <SelectTrigger id="role" size="default" className={chipSelect}>
               <SelectValue />
@@ -93,9 +98,9 @@ export function ControlBar({
             onCheckedChange={onBackground202Change}
           />
           <span className="text-[#111]">
-            Background 202
+            {t("control.background202")}
             <span className="ml-1 text-[#6f6e69]">
-              {background202 ? "accept" : "inline"}
+              {background202 ? t("control.accept") : t("control.inline")}
             </span>
           </span>
         </label>

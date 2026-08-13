@@ -1,6 +1,9 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import type { FleetRunView } from "./recent-runs";
 import { shortHash } from "./verdict-pill";
+import { useLocale } from "@/components/i18n/locale-provider";
 
 type StepState = "pending" | "current" | "done" | "skipped";
 
@@ -22,26 +25,27 @@ function stepState(run: FleetRunView | null): {
 }
 
 export function PipelineStepper({ run }: { run: FleetRunView | null }) {
+  const { t } = useLocale();
   const s = stepState(run);
   const consultNote = run?.adk?.consult?.invoked
-    ? `tighten only · ${run.adk.consult.recommendation || "invoked"}`
+    ? t("step.consultInvoked", { rec: run.adk.consult.recommendation || "invoked" })
     : run && s.consult === "done"
-      ? "tighten only · not invoked"
-      : "tighten only · never writes the hash";
+      ? t("step.consultNotInvoked")
+      : t("step.consultNever");
 
   return (
     <ol className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <Step n={1} label="Ingest" detail="Fixture or PDF accepted" state={s.ingest} />
-      <Step n={2} label="Consult" detail={consultNote} state={s.consult} tighten />
+      <Step n={1} label={t("step.ingest")} detail={t("step.ingestDetail")} state={s.ingest} />
+      <Step n={2} label={t("step.consult")} detail={consultNote} state={s.consult} tighten={t("step.tightenOnly")} />
       <Step
         n={3}
-        label="Hash"
+        label={t("step.hash")}
         detail={
           run?.invoice_hash
             ? shortHash(run.invoice_hash)
             : s.hash === "skipped"
-              ? "not written · tools only"
-              : "tools write this"
+              ? t("step.hashSkipped")
+              : t("step.hashTools")
         }
         state={s.hash}
       />
@@ -54,13 +58,13 @@ function Step({
   label,
   detail,
   state,
-  tighten = false,
+  tighten,
 }: {
   n: number;
   label: string;
   detail: string;
   state: StepState;
-  tighten?: boolean;
+  tighten?: string;
 }) {
   return (
     <li
@@ -74,7 +78,7 @@ function Step({
     >
       <p className="vf-label">
         {n} · {label}
-        {tighten ? " · tighten only" : ""}
+        {tighten ? ` · ${tighten}` : ""}
       </p>
       <p
         className={cn(

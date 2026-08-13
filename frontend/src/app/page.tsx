@@ -19,8 +19,11 @@ import { AppShell } from "@/components/shell/app-shell";
 import { Button } from "@/components/ui/button";
 import { FleetHero } from "@/components/fleet/hero";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/i18n/locale-provider";
+import { JUDGE_BANNER } from "@/lib/i18n";
 
 export default function AuditPage() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string>("default");
@@ -59,7 +62,7 @@ export default function AuditPage() {
       await apiClient.post(`/api/v1/invoices/extract/${id}`);
     } catch (err: any) {
       setUploadStatus("ERROR");
-      setErrorMsg(err.response?.data?.detail || "Upload failed");
+      setErrorMsg(err.response?.data?.detail || t("error.uploadFailed"));
     }
   };
 
@@ -94,9 +97,9 @@ export default function AuditPage() {
   return (
     <AppShell>
       <FleetHero
-        kicker="The LLM never writes the hash."
-        title="Check an invoice before the fleet signs it."
-        description="Upload a PDF or XML to extract fields. Then open the judge console and dispatch a fixture — you’ll see the verdict and hash, not a chat."
+        kicker={JUDGE_BANNER}
+        title={t("landing.title")}
+        description={t("landing.description")}
         actions={
           <Button
             render={<Link href="/fleet" />}
@@ -104,7 +107,7 @@ export default function AuditPage() {
             size="lg"
             className="h-10 rounded-md bg-[#111] px-4 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#18794e]"
           >
-            Open judge console
+            {t("landing.cta")}
             <ArrowRight data-icon="inline-end" />
           </Button>
         }
@@ -114,13 +117,13 @@ export default function AuditPage() {
         <section id="drop" className="vf-card rounded-lg p-4 sm:p-5">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="vf-label">Extract</p>
+              <p className="vf-label">{t("landing.extract")}</p>
               <h2 className="mt-1 text-[15px] font-medium tracking-tight text-[#111]">
-                Drop a PDF or XML invoice
+                {t("landing.extractTitle")}
               </h2>
             </div>
             <label className="flex min-w-0 flex-col gap-1.5" data-testid="org-switcher">
-              <span className="vf-label">Tenant</span>
+              <span className="vf-label">{t("landing.tenant")}</span>
               <select
                 data-testid="org-switcher-select"
                 className="h-10 rounded-md border border-[#e8e6e3] bg-white px-3 text-[13px] text-[#111] outline-none sm:h-8"
@@ -150,10 +153,10 @@ export default function AuditPage() {
             </span>
             <span className="text-center">
               <span className="block text-[14px] font-medium text-[#111]">
-                {file ? file.name : "Drop a file or click to browse"}
+                {file ? file.name : t("landing.drop")}
               </span>
               <span className="mt-1 block text-[12px] text-[#6f6e69]">
-                PDF or XML · contest fixtures live on /fleet
+                {t("landing.dropHint")}
               </span>
             </span>
           </label>
@@ -166,13 +169,13 @@ export default function AuditPage() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="vf-card rounded-lg px-4 py-5">
-            <p className="vf-label">Process</p>
+            <p className="vf-label">{t("landing.process")}</p>
             <div className="relative mt-5 flex flex-col gap-5">
               <div className="absolute top-2 bottom-2 left-3 w-px bg-[#e8e6e3]" />
-              <Step label="Reading PDF" sub="OCR and key-field extraction" status={getStepStatus("OCR")} />
-              <Step label="Validating amounts" sub="Base + VAT = Total" status={getStepStatus("VALIDATION")} />
-              <Step label="Writing VeriFactu hash" sub="Digital signature and chaining" status={getStepStatus("SIGNING")} />
-              <Step label="Submitting to AEAT" status={getStepStatus("AEAT")} />
+              <Step label={t("landing.stepOcr")} sub={t("landing.stepOcrSub")} status={getStepStatus("OCR")} />
+              <Step label={t("landing.stepValid")} sub={t("landing.stepValidSub")} status={getStepStatus("VALIDATION")} />
+              <Step label={t("landing.stepHash")} sub={t("landing.stepHashSub")} status={getStepStatus("SIGNING")} />
+              <Step label={t("landing.stepAeat")} status={getStepStatus("AEAT")} />
             </div>
           </section>
 
@@ -188,7 +191,7 @@ export default function AuditPage() {
               <ResultHead
                 icon={<XCircle className="size-5" />}
                 tone="rose"
-                title="Rejected by AEAT"
+                title={t("landing.rejected")}
                 body={auditData.message}
                 badge={<StatusBadge status={InvoiceStatus.REJECTED_AEAT} size="md" />}
               />
@@ -197,8 +200,8 @@ export default function AuditPage() {
                 <ResultHead
                   icon={<CheckCircle2 className="size-5" />}
                   tone="emerald"
-                  title="Sent to AEAT"
-                  body="The registry record is complete."
+                  title={t("landing.sent")}
+                  body={t("landing.sentBody")}
                   badge={<StatusBadge status={InvoiceStatus.SENT_OK} size="md" />}
                 />
                 {auditData.aeat_csv && <CSVDisplay csv={auditData.aeat_csv} />}
@@ -207,19 +210,19 @@ export default function AuditPage() {
               <ResultHead
                 icon={<AlertTriangle className="size-5" />}
                 tone="amber"
-                title="Pending AEAT submission"
-                body="Invoice signed, waiting on Hacienda connectivity."
+                title={t("landing.pendingAeat")}
+                body={t("landing.pendingAeatBody")}
                 badge={<StatusBadge status={InvoiceStatus.SIGNED} size="md" />}
               />
             ) : (
               <ResultHead
                 icon={<Loader2 className={cn("size-5", uploadStatus === "PROCESSING" && "animate-spin")} />}
                 tone="slate"
-                title={uploadStatus === "IDLE" ? "Awaiting file" : "Audit in progress"}
+                title={uploadStatus === "IDLE" ? t("landing.awaiting") : t("landing.inProgress")}
                 body={
                   auditData
-                    ? `Processing invoice ${auditData.series}-${auditData.number}`
-                    : "Select a file, or open /fleet for the judge demo."
+                    ? t("landing.processingInvoice", { series: auditData.series, number: auditData.number })
+                    : t("landing.selectFile")
                 }
               />
             )}

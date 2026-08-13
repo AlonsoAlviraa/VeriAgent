@@ -5,12 +5,14 @@ export function FleetHero({
   counters,
   kicker,
   title = "The LLM never writes the hash.",
+  subtitleEs,
   description = "Dispatch a fixture. The fleet signs, escalates, or blocks — consult can only tighten.",
   actions,
 }: {
   counters?: { signed: number; escalated: number; blocked: number };
   kicker?: string;
   title?: string;
+  subtitleEs?: string;
   description?: string;
   actions?: ReactNode;
 }) {
@@ -31,6 +33,9 @@ export function FleetHero({
           <h1 className="text-[32px] leading-[1.15] font-medium tracking-[-0.03em] text-[#111] md:text-[40px]">
             {title}
           </h1>
+          {subtitleEs ? (
+            <p className="mt-2 text-[16px] leading-snug text-[#6f6e69]">{subtitleEs}</p>
+          ) : null}
           <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-[#6f6e69]">
             {description}
           </p>

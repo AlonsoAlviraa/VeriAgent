@@ -1,10 +1,22 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { asVerdict, verdictStyles, type Verdict } from "./verdict";
+import { useLocale } from "@/components/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n";
+
+const HINT_KEYS: Record<Verdict, MessageKey> = {
+  SIGNED: "verdict.hint.SIGNED",
+  ESCALATED: "verdict.hint.ESCALATED",
+  BLOCKED: "verdict.hint.BLOCKED",
+};
 
 export function VerdictPill({ verdict }: { verdict?: string }) {
+  const { locale, t } = useLocale();
   const key: Verdict = asVerdict(verdict);
   const s = verdictStyles[key];
+  const token = verdict || key;
   return (
     <Badge
       variant="outline"
@@ -15,7 +27,10 @@ export function VerdictPill({ verdict }: { verdict?: string }) {
         s.text
       )}
     >
-      {verdict || key}
+      {token}
+      {locale === "es" ? (
+        <span className="ml-1 font-normal opacity-70">· {t(HINT_KEYS[key])}</span>
+      ) : null}
     </Badge>
   );
 }
