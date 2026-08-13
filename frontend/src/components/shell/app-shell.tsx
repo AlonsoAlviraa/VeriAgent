@@ -135,11 +135,14 @@ export function AppShell({
 
   return (
     <div
-      className="vf-app min-h-screen bg-[#fbfbf9] text-[#111]"
+      className={cn(
+        "vf-app min-h-screen bg-[#fbfbf9] text-[#111]",
+        path.startsWith("/fleet") && "vf-fleet-page"
+      )}
       style={{ backgroundColor: "#fbfbf9", color: "#111111" }}
     >
       <header
-        className="sticky top-0 z-30 border-b border-[#e8e6e3] bg-[#fbfbf9]"
+        className="vf-app-nav sticky top-0 z-30 border-b border-[#e8e6e3] bg-[#fbfbf9]"
         style={{ backgroundColor: "#fbfbf9" }}
       >
         <div className="mx-auto flex w-full max-w-[1120px] items-center gap-2 px-4 py-3 md:gap-4 md:px-6">
@@ -180,7 +183,7 @@ export function AppShell({
         {right ? <div className="mx-auto hidden max-w-[1120px] px-4 pb-3 md:block md:px-6">{right}</div> : null}
       </header>
       {children}
-      <footer className="border-t border-[#e8e6e3] px-4 py-6 md:px-6">
+      <footer className="vf-app-footer border-t border-[#e8e6e3] px-4 py-6 md:px-6">
         <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-4">
           <nav aria-label={t("nav.aria")} className="flex flex-wrap gap-x-4 gap-y-2">
             {footerLinks.map((item) => (

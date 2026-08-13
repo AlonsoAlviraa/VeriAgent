@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import apiClient, { TENANT_STORAGE_KEY, formatApiError } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
+import { AgentIdentity } from "@/components/fleet/agent-identity";
 import { ControlBar } from "@/components/fleet/control-bar";
 import { FixtureGrid } from "@/components/fleet/fixture-grid";
 import { AgentRoster } from "@/components/fleet/agent-roster";
@@ -12,7 +13,9 @@ import { IngestPanel } from "@/components/fleet/ingest-panel";
 import { RecentRuns, type FleetRunView } from "@/components/fleet/recent-runs";
 import { ReplayHint } from "@/components/fleet/replay-hint";
 import { ResultCard } from "@/components/fleet/result-card";
+import { ShortcutCheatsheet } from "@/components/fleet/shortcut-cheatsheet";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { useFleetShortcuts } from "@/hooks/use-fleet-shortcuts";
 import { JUDGE_BANNER, type MessageKey } from "@/lib/i18n";
 
 type FleetRun = FleetRunView & {
@@ -339,6 +342,16 @@ export default function FleetPage() {
     };
   }, [history]);
 
+  const toggleBackground = useCallback(() => {
+    setBackground((value) => !value);
+  }, []);
+
+  const { cheatsheetOpen, setCheatsheetOpen } = useFleetShortcuts({
+    busy,
+    onDispatch: loadFixture,
+    onToggleBackground: toggleBackground,
+  });
+
   return (
     <AppShell>
       <FleetHero
@@ -355,42 +368,58 @@ export default function FleetPage() {
         background202={background}
         onBackground202Change={setBackground}
         userId={identity?.user_id}
+        onOpenShortcuts={() => setCheatsheetOpen(true)}
       />
 
       <main className="mx-auto w-full max-w-[1120px] px-4 py-6 md:px-6 md:py-8">
         {error && (
-          <p className="mb-4 rounded-lg border border-[#f0c7c3] bg-[#fbefee] px-4 py-3 text-sm text-[#9b2c2c]">
+          <p className="vf-no-print mb-4 rounded-lg border border-[#f0c7c3] bg-[#fbefee] px-4 py-3 text-sm text-[#9b2c2c]">
             {error.kind === "key"
               ? t(error.key, error.vars)
               : formatApiError(error.err, locale) || t(error.fallback)}
           </p>
         )}
         {role === "auditor" && (
-          <p className="mb-4 rounded-lg border border-[#f3d5b0] bg-[#fbf3e8] px-4 py-3 text-sm text-[#9a4d09]">
+          <p className="vf-no-print mb-4 rounded-lg border border-[#f3d5b0] bg-[#fbf3e8] px-4 py-3 text-sm text-[#9a4d09]">
             {t("auditor.banner", { tools: (identity?.denied_tools || []).join(", ") || "invoice.sign" })}
           </p>
         )}
 
         <div className="flex flex-col gap-6">
           <ResultCard run={run} background202={background} />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <div className="flex flex-col gap-6">
+          <div className="vf-fleet-grid grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="vf-no-print flex flex-col gap-6">
               <FixtureGrid busy={busy} activeJob={activeJob} onDispatch={loadFixture} />
               <IngestPanel busy={busy} activeJob={activeJob} onUpload={ingestPdf} onSweep={runSweep} />
             </div>
             <aside className="flex flex-col gap-4">
-              <RecentRuns runs={history} live={run} />
+              <div className="vf-no-print flex flex-col gap-4">
+                <RecentRuns runs={history} live={run} />
+                <AgentRoster agents={registry?.agents || null} compact />
+                <ReplayHint />
+              </div>
               <FleetChecklist
                 track={checklist?.track}
                 items={checklist?.items || []}
                 aeatRemitting={checklist?.aeat_remitting}
               />
-              <AgentRoster agents={registry?.agents || null} compact />
-              <ReplayHint />
+              <div className="vf-print-only">
+                <h2 className="mb-2 text-[15px] font-medium tracking-tight text-[#111]">
+                  {t("print.identity")}
+                </h2>
+                <AgentIdentity
+                  tenant={tenant}
+                  role={role}
+                  userId={identity?.user_id}
+                  allowed={identity?.allowed_tools || []}
+                  denied={identity?.denied_tools || []}
+                />
+              </div>
             </aside>
           </div>
         </div>
       </main>
+      <ShortcutCheatsheet open={cheatsheetOpen} onClose={() => setCheatsheetOpen(false)} />
     </AppShell>
   );
 }

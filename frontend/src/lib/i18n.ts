@@ -94,6 +94,21 @@ const en = {
   "recent.reason": "Reason",
   "recent.settling": "settling",
   "recent.noHash": "no hash",
+  "recent.exportCsv": "Export CSV",
+
+  "shortcuts.aria": "Keyboard shortcuts",
+  "shortcuts.title": "Shortcuts",
+  "shortcuts.open": "Shortcuts",
+  "shortcuts.close": "Close",
+  "shortcuts.1": "Dispatch valid invoice",
+  "shortcuts.2": "Dispatch math error",
+  "shortcuts.3": "Dispatch prompt injection",
+  "shortcuts.4": "Dispatch hospitality",
+  "shortcuts.u": "Focus PDF dropzone",
+  "shortcuts.g": "Toggle Background 202",
+  "shortcuts.help": "Show this cheatsheet",
+
+  "print.identity": "Identity",
 
   "checklist.aria": "Stage One checklist",
   "checklist.kicker": "Stage One",
@@ -410,6 +425,21 @@ const es: Record<MessageKey, string> = {
   "recent.reason": "Motivo",
   "recent.settling": "resolviendo",
   "recent.noHash": "sin hash",
+  "recent.exportCsv": "Exportar CSV",
+
+  "shortcuts.aria": "Atajos de teclado",
+  "shortcuts.title": "Atajos",
+  "shortcuts.open": "Atajos",
+  "shortcuts.close": "Cerrar",
+  "shortcuts.1": "Despachar factura válida",
+  "shortcuts.2": "Despachar error de cálculo",
+  "shortcuts.3": "Despachar inyección de prompt",
+  "shortcuts.4": "Despachar hostelería",
+  "shortcuts.u": "Enfocar zona de PDF",
+  "shortcuts.g": "Alternar Background 202",
+  "shortcuts.help": "Mostrar esta hoja",
+
+  "print.identity": "Identidad",
 
   "checklist.aria": "Lista Stage One",
   "checklist.kicker": "Stage One",

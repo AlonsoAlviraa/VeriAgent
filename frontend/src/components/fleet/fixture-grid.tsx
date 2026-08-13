@@ -62,7 +62,7 @@ export function FixtureGrid({
       <h2 className="text-[15px] font-medium tracking-tight text-[#111]">{t("fixtures.heading")}</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {FIXTURES.map((fixture) => {
+        {FIXTURES.map((fixture, index) => {
           const Icon = fixture.icon;
           const active = busy && activeJob === fixture.path;
           return (
@@ -77,7 +77,12 @@ export function FixtureGrid({
                   <h3 className="mt-1 text-[15px] leading-tight font-medium text-[#111]">
                     {t(fixture.labelKey)}
                   </h3>
-                  <p className="mt-1 text-[12px] text-[#6f6e69]">{fixture.expect}</p>
+                  <p className="mt-1 text-[12px] text-[#6f6e69]">
+                    {fixture.expect}
+                    <kbd className="ml-2 rounded border border-[#e8e6e3] bg-[#fbfbf9] px-1.5 font-mono text-[11px] text-[#6f6e69]">
+                      {index + 1}
+                    </kbd>
+                  </p>
                 </div>
                 {active ? (
                   <Loader2 className="size-4 shrink-0 animate-spin text-[#6f6e69]" />

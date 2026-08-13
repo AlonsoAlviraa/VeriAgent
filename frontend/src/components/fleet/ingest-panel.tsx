@@ -5,6 +5,7 @@ import { Layers, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { FLEET_DROPZONE_ID } from "@/hooks/use-fleet-shortcuts";
 
 export function IngestPanel({
   busy,
@@ -32,6 +33,7 @@ export function IngestPanel({
   return (
     <section aria-label={t("ingest.aria")} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_minmax(0,200px)]">
       <div
+        id={FLEET_DROPZONE_ID}
         role="button"
         tabIndex={0}
         aria-label={t("ingest.uploadAria")}
