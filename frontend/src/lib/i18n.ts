@@ -14,6 +14,10 @@ const en = {
   "nav.audit": "Audit",
   "nav.ledger": "Ledger",
   "nav.judgeConsole": "Judge console",
+  "nav.tutorial": "Tutorial",
+  "nav.security": "Security",
+  "nav.pricing": "Pricing",
+  "nav.more": "More",
   "nav.lang": "Language",
   "footer.identity":
     "VeriFleet · google-adk · gemini-3.5-flash · local InMemoryRunner session · no chat surface",
@@ -177,6 +181,94 @@ const en = {
   "history.status.REVISAR": "REVIEW",
   "history.status.RECHAZADO": "REJECTED",
 
+  "cta.fleet": "Open judge console",
+
+  "tutorial.kicker": "Operator setup",
+  "tutorial.title": "How to install the AEAT certificate",
+  "tutorial.lead":
+    "VeriFactu remittance needs an AEAT electronic certificate (mTLS). Fleet ingest today signs locally and does not call AEAT. This is an operator guide — it does not upload keys to the browser.",
+  "tutorial.warnTitle": "This contest build does not remit",
+  "tutorial.warnBody":
+    "The /fleet path signs with a local SHA-256 hash chain. It never opens a SOAP session to AEAT. There is no “connected to Hacienda” badge. Production remittance stays fail-closed while PROD_AEAT_ENABLED is false.",
+  "tutorial.step1.title": "Get an electronic certificate",
+  "tutorial.step1.body":
+    "Request a certificate from FNMT or through the AEAT electronic office. Use the official sites only. This console does not scrape portals or issue certificates.",
+  "tutorial.step1.fnmt": "FNMT electronic office",
+  "tutorial.step1.verifactu": "FNMT — certificates valid for VeriFactu",
+  "tutorial.step1.aeat": "AEAT — how to obtain a certificate",
+  "tutorial.step1.sede": "AEAT sede",
+  "tutorial.step2.title": "Store cert and key on the API host",
+  "tutorial.step2.body":
+    "Place the certificate and private key as files on the machine that runs the API. Configure paths with environment variables only. Never paste PEM into chat, Git, or a form. This Next.js app has no upload for .p12 or keys.",
+  "tutorial.step3.title": "Set environment variables",
+  "tutorial.step3.body":
+    "Set these on the API process. Keep AEAT_ENV=SANDBOX. Do not set PRODUCTION unless PROD_AEAT_ENABLED is true — that flag stays false in this contest build.",
+  "tutorial.envHint": "Variable names and placeholder paths only. Never commit real files.",
+  "tutorial.step4.title": "Restrict file permissions",
+  "tutorial.step4.body":
+    "The certificate and private key must be readable only by the service user that runs the API (for example chmod 600, owned by that user). Do not serve these files from the frontend or a world-readable volume.",
+  "tutorial.step5.title": "Restart the API",
+  "tutorial.step5.body":
+    "Environment variables are read at process start. Restart the API after changing them. Remittance on this contest build remains fail-closed.",
+  "tutorial.step6.title": "Fail-closed — never a fake SENT_OK",
+  "tutorial.step6.body":
+    "Missing certificates return CERTS_MISSING. Missing files return CERTS_NOT_FOUND. Production without the flag returns PROD_AEAT_DISABLED. The API never invents SENT_OK.",
+  "tutorial.neverTitle": "Never do this",
+  "tutorial.never1": "Paste a private key or PEM into this UI, a chat, or a Git commit.",
+  "tutorial.never2": "Upload a .p12 or .pem through the Next.js app.",
+  "tutorial.never3": "Flip PROD_AEAT_ENABLED for the contest demo.",
+  "tutorial.never4": "Print certificate paths or secrets in logs shown to judges.",
+
+  "security.kicker": "Security",
+  "security.title": "What this fleet actually enforces",
+  "security.lead":
+    "Claims that are true in this repository. No SOC 2 badge. No “connected to Hacienda” status.",
+  "security.archTitle": "Signing path",
+  "security.archIngest": "Ingest",
+  "security.archIngestSub": "Fixture or PDF accepted",
+  "security.archConsult": "Consult",
+  "security.archConsultSub": "Tighten only",
+  "security.archHash": "Tools",
+  "security.archHashSub": "Write the hash",
+  "security.c1.title": "The LLM never writes the hash",
+  "security.c1.body":
+    "Consult is tighten-only. Gemini can escalate or block. It cannot call invoice.sign. Tools write the SHA-256 chain.",
+  "security.c2.title": "Model Armor",
+  "security.c2.body": "Prompt injection is blocked. NIF and IBAN are redacted before the model sees them.",
+  "security.c3.title": "Tenant isolation",
+  "security.c3.body": "Requests are scoped by X-Tenant-Id. The auditor role cannot invoice.sign.",
+  "security.c4.title": "Memory Bank",
+  "security.c4.body": "Memory is per-tenant. Hospitality is denied on enterprise-demo.",
+  "security.c5.title": "AEAT production is fail-closed",
+  "security.c5.body":
+    "PROD_AEAT_ENABLED defaults to false. This contest build does not flip it. Missing certs return CERTS_MISSING — never a fake SENT_OK.",
+  "security.c6.title": "No Hacienda session badge",
+  "security.c6.body":
+    "Fleet ingest signs locally and does not call AEAT. The chip reads “not on fleet path” / “no en la ruta de flota”. It is never green.",
+
+  "pricing.kicker": "Pricing",
+  "pricing.title": "Plans for a local VeriFactu fleet",
+  "pricing.lead":
+    "Monthly. Honest about what ships in this contest build. AEAT remittance is not included live. No invented customers.",
+  "pricing.period": "/mo",
+  "pricing.note":
+    "AEAT production remittance stays fail-closed until certificates are installed on the API host and PROD_AEAT_ENABLED is true. That flag is false here.",
+  "pricing.demo.name": "Demo / Judge",
+  "pricing.demo.tag": "Contest",
+  "pricing.demo.f1": "Local fixtures on /fleet",
+  "pricing.demo.f2": "Login-free judge console",
+  "pricing.demo.f3": "No AEAT remittance",
+  "pricing.issuer.name": "Issuer",
+  "pricing.issuer.tag": "Recommended",
+  "pricing.issuer.f1": "Multi-tenant issuer",
+  "pricing.issuer.f2": "Hash chain + PDF ingest",
+  "pricing.issuer.f3": "AEAT sandbox later (not included live)",
+  "pricing.ent.name": "Enterprise",
+  "pricing.ent.tag": "Fortified Fleet",
+  "pricing.ent.f1": "Memory Bank + Model Armor",
+  "pricing.ent.f2": "Auditor role",
+  "pricing.ent.f3": "AEAT prod fail-closed until certs + flag",
+
   "login.title": "VeriAgent Login",
   "login.subtitle": "Secure access for fiscal audit",
   "login.email": "Corporate email",
@@ -195,6 +287,10 @@ const es: Record<MessageKey, string> = {
   "nav.audit": "Auditoría",
   "nav.ledger": "Libro",
   "nav.judgeConsole": "Consola del juez",
+  "nav.tutorial": "Tutorial",
+  "nav.security": "Seguridad",
+  "nav.pricing": "Precios",
+  "nav.more": "Más",
   "nav.lang": "Idioma",
   "footer.identity":
     "VeriFleet · google-adk · gemini-3.5-flash · sesión local InMemoryRunner · sin chat",
@@ -357,6 +453,94 @@ const es: Record<MessageKey, string> = {
   "history.status.FIRMADO": "FIRMADO",
   "history.status.REVISAR": "REVISAR",
   "history.status.RECHAZADO": "RECHAZADO",
+
+  "cta.fleet": "Abrir consola del juez",
+
+  "tutorial.kicker": "Puesta en marcha",
+  "tutorial.title": "Cómo instalar el certificado AEAT",
+  "tutorial.lead":
+    "VeriFactu necesita un certificado electrónico AEAT (mTLS) para remitir. La ingesta de flota hoy firma en local y no llama a la AEAT. Esta es una guía de operador: no sube claves al navegador.",
+  "tutorial.warnTitle": "Esta build de concurso no remite",
+  "tutorial.warnBody":
+    "La ruta /fleet firma con una cadena SHA-256 local. No abre una sesión SOAP con la AEAT. No hay insignia de “conectado a Hacienda”. La remisión a producción sigue cerrada en fallo mientras PROD_AEAT_ENABLED sea false.",
+  "tutorial.step1.title": "Obtén un certificado electrónico",
+  "tutorial.step1.body":
+    "Solicítalo en la FNMT o en la sede electrónica de la AEAT. Usa solo sitios oficiales. Esta consola no rastrea portales ni emite certificados.",
+  "tutorial.step1.fnmt": "Sede electrónica FNMT",
+  "tutorial.step1.verifactu": "FNMT — certificados válidos para VeriFactu",
+  "tutorial.step1.aeat": "AEAT — cómo obtener un certificado",
+  "tutorial.step1.sede": "Sede AEAT",
+  "tutorial.step2.title": "Guarda cert y clave en el host de la API",
+  "tutorial.step2.body":
+    "Deja el certificado y la clave privada como archivos en la máquina que ejecuta la API. Configura las rutas solo con variables de entorno. Nunca pegues PEM en un chat, Git o un formulario. Esta app Next.js no sube .p12 ni claves.",
+  "tutorial.step3.title": "Define las variables de entorno",
+  "tutorial.step3.body":
+    "Configúralas en el proceso de la API. Mantén AEAT_ENV=SANDBOX. No uses PRODUCTION salvo que PROD_AEAT_ENABLED sea true — ese flag permanece en false en esta build de concurso.",
+  "tutorial.envHint": "Solo nombres de variables y rutas de ejemplo. Nunca subas archivos reales al repo.",
+  "tutorial.step4.title": "Restringe los permisos de archivo",
+  "tutorial.step4.body":
+    "El certificado y la clave privada deben ser legibles solo por el usuario de servicio que ejecuta la API (por ejemplo chmod 600, propiedad de ese usuario). No los sirvas desde el frontend ni en un volumen world-readable.",
+  "tutorial.step5.title": "Reinicia la API",
+  "tutorial.step5.body":
+    "Las variables de entorno se leen al arrancar el proceso. Reinicia la API después de cambiarlas. En esta build de concurso la remisión sigue cerrada en fallo.",
+  "tutorial.step6.title": "Cierre en fallo — nunca un SENT_OK falso",
+  "tutorial.step6.body":
+    "Si faltan certificados, el conector devuelve CERTS_MISSING. Si no hay ficheros, CERTS_NOT_FOUND. Producción sin el flag: PROD_AEAT_DISABLED. La API nunca inventa SENT_OK.",
+  "tutorial.neverTitle": "Nunca hagas esto",
+  "tutorial.never1": "Pegar una clave privada o PEM en esta UI, un chat o un commit de Git.",
+  "tutorial.never2": "Subir un .p12 o .pem a través de la app Next.js.",
+  "tutorial.never3": "Activar PROD_AEAT_ENABLED para la demo del concurso.",
+  "tutorial.never4": "Imprimir rutas de certificado o secretos en logs visibles para el jurado.",
+
+  "security.kicker": "Seguridad",
+  "security.title": "Lo que esta flota sí aplica",
+  "security.lead":
+    "Afirmaciones ciertas en este repositorio. Sin sello SOC 2. Sin estado de “conectado a Hacienda”.",
+  "security.archTitle": "Ruta de firma",
+  "security.archIngest": "Ingesta",
+  "security.archIngestSub": "Fixture o PDF aceptado",
+  "security.archConsult": "Consult",
+  "security.archConsultSub": "Solo endurecer",
+  "security.archHash": "Tools",
+  "security.archHashSub": "Escriben el hash",
+  "security.c1.title": "El LLM no escribe el hash",
+  "security.c1.body":
+    "Consult solo puede endurecer. Gemini puede escalar o bloquear. No puede llamar invoice.sign. Las tools escriben la cadena SHA-256.",
+  "security.c2.title": "Model Armor",
+  "security.c2.body": "Se bloquea la inyección de prompt. NIF e IBAN se ocultan antes de que el modelo los vea.",
+  "security.c3.title": "Aislamiento de tenant",
+  "security.c3.body": "Las peticiones van con X-Tenant-Id. El rol auditor no puede invoice.sign.",
+  "security.c4.title": "Memory Bank",
+  "security.c4.body": "La memoria es por tenant. Hostelería se deniega en enterprise-demo.",
+  "security.c5.title": "La producción AEAT cierra en fallo",
+  "security.c5.body":
+    "PROD_AEAT_ENABLED vale false por defecto. Esta build de concurso no lo activa. Sin certs: CERTS_MISSING — nunca un SENT_OK falso.",
+  "security.c6.title": "Sin insignia de sesión con Hacienda",
+  "security.c6.body":
+    "La ingesta de flota firma en local y no llama a la AEAT. El chip dice “not on fleet path” / “no en la ruta de flota”. Nunca es verde.",
+
+  "pricing.kicker": "Precios",
+  "pricing.title": "Planes para una flota VeriFactu local",
+  "pricing.lead":
+    "Mensual. Honesto con lo que incluye esta build de concurso. La remisión AEAT no va en vivo. Sin clientes inventados.",
+  "pricing.period": "/mes",
+  "pricing.note":
+    "La remisión AEAT a producción sigue cerrada en fallo hasta instalar certificados en el host de la API y activar PROD_AEAT_ENABLED. Ese flag es false aquí.",
+  "pricing.demo.name": "Demo / Juez",
+  "pricing.demo.tag": "Concurso",
+  "pricing.demo.f1": "Fixtures locales en /fleet",
+  "pricing.demo.f2": "Consola del juez sin login",
+  "pricing.demo.f3": "Sin remisión AEAT",
+  "pricing.issuer.name": "Emisor",
+  "pricing.issuer.tag": "Recomendado",
+  "pricing.issuer.f1": "Emisor multi-tenant",
+  "pricing.issuer.f2": "Cadena de hash + ingesta PDF",
+  "pricing.issuer.f3": "Sandbox AEAT más adelante (no incluido en vivo)",
+  "pricing.ent.name": "Enterprise",
+  "pricing.ent.tag": "Fortified Fleet",
+  "pricing.ent.f1": "Memory Bank + Model Armor",
+  "pricing.ent.f2": "Rol auditor",
+  "pricing.ent.f3": "AEAT prod cerrada en fallo hasta certs + flag",
 
   "login.title": "Acceso VeriAgent",
   "login.subtitle": "Acceso seguro para auditoría fiscal",
