@@ -45,14 +45,14 @@ export function OrgSwitcher({ orgs = DEFAULT_ORGS, value, onChange }: Props) {
 
   return (
     <div
-      className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm"
+      className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
       data-testid="org-switcher"
       role="group"
       aria-label="Organization switcher"
     >
       <span className="text-slate-500">Org</span>
       <select
-        className="bg-transparent font-medium text-slate-900 outline-none"
+        className="bg-transparent font-medium text-slate-100 outline-none"
         value={current}
         onChange={(e) => select(e.target.value)}
         data-testid="org-switcher-select"
@@ -77,7 +77,7 @@ export function ChainIntegrityBadge({
 }) {
   return (
     <div
-      className="rounded-md border px-2 py-1 text-xs"
+      className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300"
       data-testid="chain-integrity-status"
       data-has-chain={hasChain ? "true" : "false"}
     >
@@ -101,7 +101,7 @@ export function ChainIntegrityBadgeLive({
   if (isLoading) {
     return (
       <div
-        className="rounded-md border px-2 py-1 text-xs text-slate-400"
+        className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-slate-400"
         data-testid="chain-integrity-status"
       >
         Chain: consultando…
@@ -111,7 +111,7 @@ export function ChainIntegrityBadgeLive({
   if (isError) {
     return (
       <div
-        className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600"
+        className="rounded-full border border-rose-400/30 px-2.5 py-1 text-[11px] text-rose-300"
         data-testid="chain-integrity-status"
         data-has-chain="false"
       >

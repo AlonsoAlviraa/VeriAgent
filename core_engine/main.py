@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -22,6 +22,7 @@ from shared.schemas import (
     TenantResponse,
 )
 from core_engine.auth.rbac import OrgContext, parse_org_context, require_roles
+from ai_agents.adk.config import GCP_SERVICES, GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK
 from core_engine.control_plane.feature_flags import PROD_AEAT_ENABLED, FeatureFlagService
 from core_engine.control_plane.registry import TenantRegistry
 from core_engine.db.database import SessionLocal, get_db, init_db
@@ -32,9 +33,9 @@ from core_engine.services.ocr import OCRService
 from core_engine.services.webhooks import WebhookEmitter
 
 app = FastAPI(
-    title="VeriAgent Core Engine",
-    version="0.3.0",
-    description="Backend API for VeriFactu enterprise compliance",
+    title="VeriFleet / VeriAgent Core Engine",
+    version="0.4.0",
+    description="VeriFactu kernel + Google ADK fiscal-compliance fleet",
 )
 
 
@@ -51,9 +52,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+_cors = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+_cors_origins = [o.strip() for o in _cors.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins or ["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -93,7 +96,17 @@ def _startup():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "core_engine", "version": "0.3.0"}
+    return {
+        "status": "ok",
+        "service": "core_engine",
+        "version": "0.4.0",
+        "fleet": "verifleet",
+        "model": GEMINI_MODEL,
+        "framework": GOOGLE_AGENT_FRAMEWORK,
+        "runner": "InMemoryRunner",
+        "gcp_services": list(GCP_SERVICES),
+        "track": "Fortified Enterprise Fleet",
+    }
 
 
 @app.post("/api/v1/invoices/upload")
@@ -318,6 +331,241 @@ async def test_emit_webhook(event: str = "invoice.test", invoice_id: str = "n/a"
     """PUX-03: demonstrate lifecycle emit registration."""
     emitter = WebhookEmitter()
     return emitter.emit(event, {"invoice_id": invoice_id})
+
+
+# ---------- VeriFleet (All Things Agentic / Google ADK) ----------
+class FleetIngestRequest(BaseModel):
+    invoice: Optional[dict] = None
+    raw_text: Optional[str] = None
+    file_id: Optional[str] = None
+
+
+class FleetMemoryRequest(BaseModel):
+    key: str
+    value: str
+
+
+class FleetBatchRequest(BaseModel):
+    invoices: list
+
+
+@app.post("/api/v1/fleet/ingest")
+def fleet_ingest(
+    body: FleetIngestRequest,
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+    wait: bool = Query(True),
+):
+    """Enqueue + run the ADK fiscal fleet. wait=false returns 202 QUEUED."""
+    from fastapi.responses import JSONResponse
+
+    from ai_agents.adk.queue import _queue_label, enqueue
+    from ai_agents.adk.runtime import run_fleet
+
+    if body.invoice is None and not body.raw_text and not body.file_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide invoice, raw_text, or file_id",
+        )
+    if not wait:
+        queued = enqueue(
+            db=db,
+            tenant_id=org.tenant_id,
+            roles=org.roles,
+            user_id=org.user_id,
+            invoice=body.invoice,
+            raw_text=body.raw_text,
+            file_id=body.file_id,
+        )
+        return JSONResponse(
+            status_code=202,
+            content={
+                "run_id": queued.run_id,
+                "tenant_id": queued.tenant_id,
+                "status": "QUEUED",
+                "decision": None,
+                "poll": "/api/v1/fleet/runs",
+                "queue": _queue_label(),
+            },
+        )
+    result = run_fleet(
+        db=db,
+        tenant_id=org.tenant_id,
+        roles=org.roles,
+        user_id=org.user_id,
+        invoice=body.invoice,
+        raw_text=body.raw_text,
+        file_id=body.file_id,
+    )
+    return result.to_dict()
+
+
+@app.get("/api/v1/fleet/runs/{run_id}")
+def fleet_get_run(
+    run_id: str,
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+):
+    from ai_agents.adk.runtime import get_run
+
+    row = get_run(db, run_id, tenant_id=org.tenant_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Fleet run not found")
+    return row
+
+
+@app.post("/api/v1/fleet/ingest/batch")
+def fleet_ingest_batch(
+    body: FleetBatchRequest,
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+    wait: bool = Query(True),
+):
+    """Run up to 5 invoices. wait=false queues them (202)."""
+    from fastapi.responses import JSONResponse
+
+    from ai_agents.adk.queue import _queue_label, enqueue
+    from ai_agents.adk.runtime import run_fleet_batch
+
+    invoices = [i for i in (body.invoices or []) if isinstance(i, dict)]
+    if not invoices:
+        raise HTTPException(status_code=400, detail="invoices must be a non-empty list")
+    if not wait:
+        ids = []
+        for inv in invoices[:5]:
+            q = enqueue(
+                db=db,
+                tenant_id=org.tenant_id,
+                roles=org.roles,
+                user_id=org.user_id,
+                invoice=inv,
+                raw_text=None,
+                file_id=None,
+            )
+            ids.append(q.run_id)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "count": len(ids),
+                "run_ids": ids,
+                "status": "QUEUED",
+                "poll": "/api/v1/fleet/runs",
+                "queue": _queue_label(),
+            },
+        )
+    results = run_fleet_batch(
+        db=db,
+        tenant_id=org.tenant_id,
+        invoices=invoices,
+        roles=org.roles,
+        user_id=org.user_id,
+    )
+    return {
+        "count": len(results),
+        "decisions": [r.decision for r in results],
+        "runs": [r.to_dict() for r in results],
+    }
+
+
+@app.get("/api/v1/fleet/runs")
+def fleet_list_runs(
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+    limit: int = 20,
+):
+    from ai_agents.adk.runtime import list_runs
+
+    return {"tenant_id": org.tenant_id, "runs": list_runs(db, org.tenant_id, limit=limit)}
+
+
+@app.get("/api/v1/fleet/compliance")
+def fleet_compliance():
+    from ai_agents.adk.compliance import checklist
+
+    return checklist()
+
+
+@app.get("/api/v1/fleet/identity")
+def fleet_identity(org: OrgContext = Depends(get_org_context)):
+    from ai_agents.adk.compliance import identity
+
+    return identity(org.tenant_id, org.user_id, org.roles)
+
+
+@app.get("/api/v1/fleet/registry")
+def fleet_registry(db: Session = Depends(get_db)):
+    from ai_agents.adk.registry import list_agents
+    from ai_agents.adk.agents import adk_status
+    from ai_agents.adk.config import GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK, GCP_SERVICES
+
+    return {
+        "agents": list_agents(db),
+        "model": GEMINI_MODEL,
+        "framework": GOOGLE_AGENT_FRAMEWORK,
+        "gcp_services": list(GCP_SERVICES),
+        "adk": adk_status(),
+    }
+
+
+@app.get("/api/v1/fleet/memory")
+def fleet_memory_list(
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+):
+    from ai_agents.adk import memory as memory_bank
+
+    return {"tenant_id": org.tenant_id, "memories": memory_bank.read_all(db, org.tenant_id)}
+
+
+@app.post("/api/v1/fleet/pubsub/push")
+def fleet_pubsub_push(
+    body: dict,
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+):
+    """Cloud Pub/Sub push target. run_id resumes envelope roles, not headers."""
+    from ai_agents.adk.pubsub import unwrap_push
+    from ai_agents.adk.queue import FleetInFlight, execute
+    from ai_agents.adk.runtime import run_fleet
+
+    payload = unwrap_push(body)
+    if payload.get("run_id"):
+        try:
+            return execute(str(payload["run_id"]), db).to_dict()
+        except FleetInFlight:
+            raise HTTPException(status_code=503, detail="run in flight")
+        except KeyError:
+            raise HTTPException(status_code=404, detail="Fleet run not found")
+    invoice = payload.get("invoice")
+    raw_text = payload.get("raw_text")
+    file_id = payload.get("file_id")
+    if invoice is None and not raw_text and not file_id:
+        return {"status": "ignored", "reason": "no invoice payload"}
+    result = run_fleet(
+        db=db,
+        tenant_id=payload.get("tenant_id") or org.tenant_id,
+        roles=org.roles,
+        user_id=org.user_id,
+        invoice=invoice,
+        raw_text=raw_text,
+        file_id=file_id,
+    )
+    return result.to_dict()
+
+
+@app.post("/api/v1/fleet/memory")
+def fleet_memory_write(
+    body: FleetMemoryRequest,
+    db: Session = Depends(get_db),
+    org: OrgContext = Depends(get_org_context),
+):
+    from ai_agents.adk import gateway, memory as memory_bank
+
+    gate = gateway.allows("memory.write", org.roles)
+    if not gate.allowed:
+        raise HTTPException(status_code=403, detail=gate.reason)
+    memory_bank.write(db, org.tenant_id, body.key, body.value)
+    return {"tenant_id": org.tenant_id, "key": body.key, "value": body.value}
 
 
 # ---------- ProductGraph API (Sprint 5-V2) ----------

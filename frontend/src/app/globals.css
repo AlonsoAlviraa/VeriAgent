@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07090f;
+  --foreground: #e8edf5;
+  --vf-emerald: #34d399;
+  --vf-amber: #fbbf24;
+  --vf-rose: #fb7185;
 }
 
 @theme inline {
@@ -12,15 +15,70 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
+  background: #07090f;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.vf-app {
+  isolation: isolate;
+}
+
+.vf-aurora {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(900px 480px at 12% -10%, rgba(16, 185, 129, 0.16), transparent 55%),
+    radial-gradient(700px 420px at 92% 0%, rgba(251, 191, 36, 0.07), transparent 50%),
+    radial-gradient(800px 500px at 70% 110%, rgba(56, 189, 248, 0.06), transparent 55%),
+    linear-gradient(#07090f, #07090f);
+}
+
+.vf-aurora::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 75%);
+}
+
+.vf-card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(18, 24, 38, 0.86), rgba(11, 15, 24, 0.78));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+}
+
+.vf-card-hover {
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.vf-card-hover:hover:not(:disabled) {
+  border-color: rgba(52, 211, 153, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(16, 185, 129, 0.08);
+}
+
+.vf-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(167, 243, 208, 0.72);
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.28);
+  color: #fff;
 }

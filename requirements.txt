@@ -33,3 +33,10 @@ groq>=0.4.0
 
 # Zero-Cost Web Search (no API key required) — used by ProductGraph researcher node
 duckduckgo-search>=4.1.0
+
+# All Things Agentic / VeriFleet — mandatory Google stack
+google-adk>=1.0.0
+google-genai>=1.0.0
+google-cloud-pubsub>=2.20.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0

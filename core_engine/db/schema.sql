@@ -246,3 +246,54 @@ INSERT INTO plans (id, name, description) VALUES
     ('standard', 'Standard', 'Shared Postgres + RLS multi-tenant tier'),
     ('enterprise', 'Enterprise', 'DB-per-tenant data plane for regulated cohorts')
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- VERIFLEET (All Things Agentic) — agent registry, memory, runs
+-- tenant_id is VARCHAR to match the ORM (e.g. "default", "enterprise-demo")
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS fleet_runs (
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(64) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'RUNNING',
+    decision VARCHAR(20) NOT NULL DEFAULT 'ESCALATED',
+    reason TEXT,
+    invoice_id VARCHAR(36),
+    invoice_hash VARCHAR(64),
+    payload_json TEXT,
+    events_json TEXT,
+    spans_json TEXT,
+    armor_json TEXT,
+    memory_json TEXT,
+    adk_json TEXT,
+    pubsub_json TEXT,
+    denied_tools_json TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fleet_runs_tenant ON fleet_runs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_fleet_runs_decision ON fleet_runs(decision);
+
+CREATE TABLE IF NOT EXISTS agent_registry (
+    id VARCHAR(36) PRIMARY KEY,
+    agent_id VARCHAR(64) NOT NULL UNIQUE,
+    name VARCHAR(120) NOT NULL,
+    version VARCHAR(20) NOT NULL,
+    role TEXT NOT NULL,
+    tools TEXT NOT NULL DEFAULT '',
+    model VARCHAR(80) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'published',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS agent_memories (
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(64) NOT NULL,
+    key VARCHAR(120) NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_agent_memory_tenant_key UNIQUE (tenant_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_memories_tenant ON agent_memories(tenant_id);

@@ -3,10 +3,16 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const isAuth = !!req.auth;
-  const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
+  const path = req.nextUrl.pathname;
+  const isAuthPage = path.startsWith("/auth");
+  const isJudgeSurface =
+    path === "/" ||
+    path.startsWith("/fleet") ||
+    path.startsWith("/history") ||
+    path.startsWith("/brand") ||
+    path.startsWith("/demo-fixtures");
 
-  // Redirect unauthenticated users to login
-  if (!isAuth && !isAuthPage) {
+  if (!isAuth && !isAuthPage && !isJudgeSurface) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 

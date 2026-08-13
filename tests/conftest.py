@@ -16,6 +16,10 @@ sys.path.insert(0, ROOT)
 # Default env before any engine import in other modules
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("VERIAGENT_AUTO_INIT_DB", "1")
+os.environ.setdefault("VERIFLEET_SKIP_LLM", "1")
+os.environ.setdefault("VERIFLEET_QUEUE_DISPATCH", "0")
+os.environ.pop("PUBSUB_TOPIC", None)
+os.environ.pop("VERIFLEET_PUBSUB_PUSH", None)
 
 
 @pytest.fixture()
@@ -26,6 +30,7 @@ def db_session():
     """
     from core_engine.db.database import Base
     import core_engine.db.models  # noqa: F401
+    import core_engine.db.fleet_models  # noqa: F401
     import core_engine.control_plane.models  # noqa: F401
     import core_engine.auth.models  # noqa: F401
 

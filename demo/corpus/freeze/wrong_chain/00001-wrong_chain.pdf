@@ -1,0 +1,15 @@
+%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
+4 0 obj << /Length 335 >> stream
+BT /F1 10 Tf 36 750 Td (FACTURA CR-00001 | NIF: B12345674 | Cliente NIF: A11111119 | Cliente: Cliente Corpus SA | Fecha: 2026-08-02 | Serie: CR | Numero: 00001 | Descripcion: Consulting services | Hash anterior: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | Base: 101.00 | IVA: 21.21 \(21%\) | Total: 122.21) Tj ET
+endstream endobj
+5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Courier >> endobj
+xref
+0 6
+0000000000 65535 f 
+trailer << /Size 6 /Root 1 0 R >>
+startxref
+0
+%%EOF

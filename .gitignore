@@ -1,7 +1,11 @@
 __pycache__/
 *.pyc
 .env
+.env.local
+.env*.local
 VeriAgent.env
+*.db
+verifleet.db
 .venv/
 venv/
 .idea/
@@ -28,3 +32,7 @@ chroma_db/
 
 # Data local (memoria de feedback, baselines de eval)
 data/
+
+# Generated invoice corpus (keep samples/ only)
+demo/corpus/v1/
+demo/fixtures/private/

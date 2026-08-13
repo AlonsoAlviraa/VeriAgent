@@ -1,0 +1,466 @@
+{
+  "seed": 20260813,
+  "count": 50,
+  "pdf_format": "human",
+  "by_class": {
+    "hospitality": 2,
+    "wrong_chain": 2,
+    "valid": 37,
+    "math_error": 5,
+    "bad_nif": 2,
+    "injection": 2
+  },
+  "items": [
+    {
+      "id": "00000-hospitality",
+      "class": "hospitality",
+      "tenant": "enterprise-demo",
+      "number": "00000",
+      "json": "demo/corpus/freeze/hospitality/00000-hospitality.json",
+      "pdf": "demo/corpus/freeze/hospitality/00000-hospitality.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00001-wrong_chain",
+      "class": "wrong_chain",
+      "tenant": "default",
+      "number": "00001",
+      "json": "demo/corpus/freeze/wrong_chain/00001-wrong_chain.json",
+      "pdf": "demo/corpus/freeze/wrong_chain/00001-wrong_chain.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00002-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00002",
+      "json": "demo/corpus/freeze/valid/00002-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00002-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00003-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00003",
+      "json": "demo/corpus/freeze/valid/00003-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00003-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00004-math_error",
+      "class": "math_error",
+      "tenant": "default",
+      "number": "00004",
+      "json": "demo/corpus/freeze/math_error/00004-math_error.json",
+      "pdf": "demo/corpus/freeze/math_error/00004-math_error.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00005-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00005",
+      "json": "demo/corpus/freeze/valid/00005-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00005-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00006-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00006",
+      "json": "demo/corpus/freeze/valid/00006-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00006-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00007-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00007",
+      "json": "demo/corpus/freeze/valid/00007-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00007-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00008-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00008",
+      "json": "demo/corpus/freeze/valid/00008-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00008-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00009-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00009",
+      "json": "demo/corpus/freeze/valid/00009-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00009-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00010-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00010",
+      "json": "demo/corpus/freeze/valid/00010-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00010-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00011-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00011",
+      "json": "demo/corpus/freeze/valid/00011-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00011-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00012-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00012",
+      "json": "demo/corpus/freeze/valid/00012-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00012-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00013-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00013",
+      "json": "demo/corpus/freeze/valid/00013-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00013-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00014-math_error",
+      "class": "math_error",
+      "tenant": "default",
+      "number": "00014",
+      "json": "demo/corpus/freeze/math_error/00014-math_error.json",
+      "pdf": "demo/corpus/freeze/math_error/00014-math_error.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00015-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00015",
+      "json": "demo/corpus/freeze/valid/00015-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00015-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00016-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00016",
+      "json": "demo/corpus/freeze/valid/00016-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00016-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00017-math_error",
+      "class": "math_error",
+      "tenant": "default",
+      "number": "00017",
+      "json": "demo/corpus/freeze/math_error/00017-math_error.json",
+      "pdf": "demo/corpus/freeze/math_error/00017-math_error.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00018-bad_nif",
+      "class": "bad_nif",
+      "tenant": "default",
+      "number": "00018",
+      "json": "demo/corpus/freeze/bad_nif/00018-bad_nif.json",
+      "pdf": "demo/corpus/freeze/bad_nif/00018-bad_nif.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00019-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00019",
+      "json": "demo/corpus/freeze/valid/00019-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00019-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00020-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00020",
+      "json": "demo/corpus/freeze/valid/00020-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00020-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00021-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00021",
+      "json": "demo/corpus/freeze/valid/00021-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00021-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00022-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00022",
+      "json": "demo/corpus/freeze/valid/00022-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00022-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00023-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00023",
+      "json": "demo/corpus/freeze/valid/00023-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00023-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00024-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00024",
+      "json": "demo/corpus/freeze/valid/00024-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00024-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00025-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00025",
+      "json": "demo/corpus/freeze/valid/00025-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00025-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00026-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00026",
+      "json": "demo/corpus/freeze/valid/00026-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00026-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00027-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00027",
+      "json": "demo/corpus/freeze/valid/00027-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00027-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00028-injection",
+      "class": "injection",
+      "tenant": "default",
+      "number": "00028",
+      "json": "demo/corpus/freeze/injection/00028-injection.json",
+      "pdf": "demo/corpus/freeze/injection/00028-injection.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00029-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00029",
+      "json": "demo/corpus/freeze/valid/00029-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00029-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00030-math_error",
+      "class": "math_error",
+      "tenant": "default",
+      "number": "00030",
+      "json": "demo/corpus/freeze/math_error/00030-math_error.json",
+      "pdf": "demo/corpus/freeze/math_error/00030-math_error.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00031-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00031",
+      "json": "demo/corpus/freeze/valid/00031-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00031-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00032-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00032",
+      "json": "demo/corpus/freeze/valid/00032-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00032-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00033-bad_nif",
+      "class": "bad_nif",
+      "tenant": "default",
+      "number": "00033",
+      "json": "demo/corpus/freeze/bad_nif/00033-bad_nif.json",
+      "pdf": "demo/corpus/freeze/bad_nif/00033-bad_nif.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00034-hospitality",
+      "class": "hospitality",
+      "tenant": "enterprise-demo",
+      "number": "00034",
+      "json": "demo/corpus/freeze/hospitality/00034-hospitality.json",
+      "pdf": "demo/corpus/freeze/hospitality/00034-hospitality.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00035-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00035",
+      "json": "demo/corpus/freeze/valid/00035-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00035-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00036-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00036",
+      "json": "demo/corpus/freeze/valid/00036-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00036-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00037-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00037",
+      "json": "demo/corpus/freeze/valid/00037-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00037-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00038-wrong_chain",
+      "class": "wrong_chain",
+      "tenant": "default",
+      "number": "00038",
+      "json": "demo/corpus/freeze/wrong_chain/00038-wrong_chain.json",
+      "pdf": "demo/corpus/freeze/wrong_chain/00038-wrong_chain.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00039-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00039",
+      "json": "demo/corpus/freeze/valid/00039-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00039-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00040-math_error",
+      "class": "math_error",
+      "tenant": "default",
+      "number": "00040",
+      "json": "demo/corpus/freeze/math_error/00040-math_error.json",
+      "pdf": "demo/corpus/freeze/math_error/00040-math_error.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00041-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00041",
+      "json": "demo/corpus/freeze/valid/00041-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00041-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00042-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00042",
+      "json": "demo/corpus/freeze/valid/00042-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00042-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00043-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00043",
+      "json": "demo/corpus/freeze/valid/00043-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00043-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00044-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00044",
+      "json": "demo/corpus/freeze/valid/00044-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00044-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00045-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00045",
+      "json": "demo/corpus/freeze/valid/00045-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00045-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00046-injection",
+      "class": "injection",
+      "tenant": "default",
+      "number": "00046",
+      "json": "demo/corpus/freeze/injection/00046-injection.json",
+      "pdf": "demo/corpus/freeze/injection/00046-injection.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00047-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00047",
+      "json": "demo/corpus/freeze/valid/00047-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00047-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00048-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00048",
+      "json": "demo/corpus/freeze/valid/00048-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00048-valid.pdf",
+      "pdf_format": "human"
+    },
+    {
+      "id": "00049-valid",
+      "class": "valid",
+      "tenant": "default",
+      "number": "00049",
+      "json": "demo/corpus/freeze/valid/00049-valid.json",
+      "pdf": "demo/corpus/freeze/valid/00049-valid.pdf",
+      "pdf_format": "human"
+    }
+  ],
+  "purpose": "ATA 50-invoice freeze (seed 20260813, count 50)"
+}

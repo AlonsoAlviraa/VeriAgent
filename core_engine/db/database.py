@@ -36,6 +36,7 @@ def init_db(drop: bool = False):
     """Create all ORM tables (used by tests and sqlite bootstrap)."""
     # Import models so metadata is populated
     from core_engine.db import models  # noqa: F401
+    from core_engine.db import fleet_models  # noqa: F401
     from core_engine.control_plane import models as cp_models  # noqa: F401
     from core_engine.auth import models as auth_models  # noqa: F401
 

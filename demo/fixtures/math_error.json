@@ -1,0 +1,30 @@
+{
+  "series": "VF",
+  "number": "002",
+  "issue_date": "2026-08-13",
+  "issuer_tax_id": "B12345674",
+  "customer": {
+    "tax_id": "A11111119",
+    "name": "Cliente SA",
+    "address": {
+      "street": "Calle Industria 1",
+      "city": "Madrid",
+      "postal_code": "28001",
+      "country": "ES"
+    }
+  },
+  "lines": [
+    {
+      "description": "Monthly fiscal compliance review",
+      "quantity": 1,
+      "unit_price": 100.0,
+      "total_amount": 100.0
+    }
+  ],
+  "taxes": [
+    { "tax_type": "IVA", "tax_rate": 21.0, "base_amount": 100.0, "tax_amount": 21.0 }
+  ],
+  "total_base": 100.0,
+  "total_tax": 21.0,
+  "total_amount": 999.0
+}

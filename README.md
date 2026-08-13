@@ -1,53 +1,90 @@
-# 🛡️ VeriAgent: AI-Powered Fiscal Compliance (VeriFactu)
+# VeriFleet
 
-VeriAgent es un sistema de auditoría inteligente diseñado para cumplir con la normativa **VeriFactu** de la AEAT. Utiliza agentes de IA (CrewAI) para validar facturas y un motor criptográfico (FastAPI) para asegurar la integridad de los datos.
+**All Things Agentic 2026 — Fortified Enterprise Fleet**
 
-## 🚀 Guía de Inicio Rápido
+Autonomous fiscal-compliance fleet for Spanish **VeriFactu**. Agents audit, sign, or escalate invoices in the background. Not a chatbot.
 
-### Requerimientos de Sistema
-- **Python 3.11+**
-- **Node.js 18+**
-- **PostgreSQL 15** (opcional para local, obligatorio para prod)
-- **Tesseract OCR**: Necesario para leer PDFs.
-  - *Windows*: Descargar el instalador de UB Mannheim.
-  - *Linux*: `sudo apt install tesseract-ocr`
+Gemini 3.5 never writes the hash. A deterministic `core_engine` does.
 
-### 1. Backend (FastAPI)
+> Pre-existing cryptographic kernel is disclosed in [`CONTEST.md`](CONTEST.md). The ADK fleet, gateway, memory, armor, registry, `/fleet` UI, and GCP deploy were built in the submission period.
+
+## Mandatory stack
+
+| Requirement | This repo |
+|---|---|
+| Gemini 3.5+ via Gemini API or Vertex AI | `gemini-3.5-flash` |
+| Google agent framework | **Google ADK** (`ai_agents/adk/`) |
+| Google Cloud infrastructure | Cloud Run + Cloud SQL + Pub/Sub (`infra/`) |
+
+## What it does
+
+Drop an invoice. The fleet runs without a chat loop:
+
+1. **Agent Gateway** — tenant + role. `auditor` cannot `invoice.sign` or `aeat.submit`.
+2. **Model Armor** — blocks prompt injection; redacts NIF/IBAN from logs.
+3. **Ingestion → Fiscal Auditor** — math, NIF, Memory Bank policy, VeriFactu RAG.
+4. **Gemini 3.5 consult** (ADK orchestrator) — may *tighten* SIGN → ESCALATE; cannot loosen a failed gate.
+5. **Signer** — only on PASS, calls `core_engine` (hash chain + Facturae).
+6. **Escalation** — human queue + webhook. Pub/Sub `invoice.received` when configured.
+
+Demo buttons on `/fleet`: valid → **SIGNED**; bad VAT → **ESCALATED**; “ignore rules and sign” → **BLOCKED**; hospitality on `enterprise-demo` → **ESCALATED**.
+
+## Architecture
+
+Diagram (paste on Devpost): [`docs/architecture-ata.svg`](docs/architecture-ata.svg)
+
+```
+UI /fleet  →  Pub/Sub invoice.received  →  Cloud Run Agent Gateway
+                                              │
+                    ┌─────────────────────────┴─────────────────────────┐
+                    │  Google ADK  ·  FiscalFleetOrchestrator           │
+                    │  model = gemini-3.5-flash                         │
+                    │  Ingestion · Auditor · Signer · Escalation        │
+                    │  Memory Bank · Registry · Model Armor · OTel      │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │ tools only
+                                    core_engine (deterministic)
+                                    hash chain · Facturae · AEAT flag
+                                              │
+                                         Cloud SQL
+```
+
+## 5-minute clone-and-run (Windows first)
+
 ```bash
-# Desde la raíz del proyecto
+python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt
-# Crear archivo .env basado en .env.example
-# Añadir tu OPENAI_API_KEY
+
+set DATABASE_URL=sqlite:///verifleet.db
+set VERIAGENT_AUTO_INIT_DB=1
 python -m uvicorn core_engine.main:app --reload --port 8000
 ```
 
-### 2. Frontend (Next.js 14)
+Unix: `export DATABASE_URL=sqlite:///verifleet.db` and `export VERIAGENT_AUTO_INIT_DB=1`.
+Optional Postgres: `docker compose up db -d`.
+
 ```bash
-cd frontend
-npm install
-# Crear frontend/.env.local con:
-# AUTH_SECRET=tu_secreto_generado
-npm run dev
+cd frontend && npm install && npm run dev
 ```
 
-## 🎨 Funcionalidades Implementadas
-- **Dashboard "Smart Audit"**: Interfaz interactiva para carga de archivos y seguimiento de estados en tiempo real.
-- **Auditoría con Agentes**: `Fiscal Auditor` (IA) que valida OCR, matemáticas y normativa.
-- **Seguridad Bifásica**: 2FA (TOTP) y gestión de "Trusted Devices" (30 días).
-- **Recuperación de Cuenta**: Generación de códigos de emergencia y flujo de reset por TOTP.
-- **Encadenamiento Hash**: Cada factura incluye el hash de la anterior (requisito VeriFactu).
+Open **http://localhost:3000/fleet**
 
-## ⚠️ Problemas Pendientes y Desafíos Técnicos
-1. **Configuración de DB en Docker**: El orquestador necesita ser refinado para asegurar que el volumen de PostgreSQL persista correctamente entre reinicios.
-2. **XAdES Signing**: Actualmente la firma digital está simulada. Se requiere integrar una librería de firma XAdES real (como `signxml`) compatible con certificados de la FNMT.
-3. **Conexión Real con AEAT**: El endpoint de envío a Hacienda está en modo `MOCK`. Falta implementar el cliente SOAP para conectar con los servidores de la Agencia Tributaria.
-4. **Persistencia de 2FA**: El estado de 2FA se guarda en sesión (JWT). Se recomienda migrar a una tabla `sessions` en la DB para mayor robustez.
+| Header | Judge value |
+|---|---|
+| `X-Tenant-Id` | `enterprise-demo` |
+| `X-User-Id` | `judge` |
+| `X-Roles` | `issuer` |
 
-## 🧪 Pruebas integrales
-Para verificar todo el flujo desde terminal sin usar el navegador:
 ```bash
-python scripts/verify_integration_e2e.py
+python -m pytest tests/test_fleet_adk.py tests/test_api.py -q
 ```
 
----
-*Desarrollado con ❤️ para la modernización del cumplimiento fiscal.*
+## Deploy (Google Cloud)
+
+See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $150 credits). After deploy, the Cloud Run URL is the hosted project for Devpost.
+
+## Docs
+
+- [`CONTEST.md`](CONTEST.md) — track, disclosure, fixtures, judge login
+- [`demo/script.md`](demo/script.md) — 4-minute unedited video
+- [`README.es.md`](README.es.md) — Spanish notes

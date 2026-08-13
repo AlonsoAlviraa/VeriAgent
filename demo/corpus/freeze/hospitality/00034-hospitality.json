@@ -1,0 +1,37 @@
+{
+  "series": "CR",
+  "number": "00034",
+  "issue_date": "2026-08-07",
+  "issuer_tax_id": "B12345674",
+  "customer": {
+    "tax_id": "A11111119",
+    "name": "Cliente Corpus SA",
+    "address": {
+      "street": "Calle Industria 1",
+      "city": "Madrid",
+      "postal_code": "28001",
+      "country": "ES"
+    }
+  },
+  "lines": [
+    {
+      "description": "Restaurante El Paso - dinner",
+      "quantity": 1,
+      "unit_price": 134.0,
+      "total_amount": 134.0
+    }
+  ],
+  "taxes": [
+    {
+      "tax_type": "IVA",
+      "tax_rate": 10.0,
+      "base_amount": 134.0,
+      "tax_amount": 13.4
+    }
+  ],
+  "total_base": 134.0,
+  "total_tax": 13.4,
+  "total_amount": 147.4,
+  "corpus_class": "hospitality",
+  "tenant_id": "enterprise-demo"
+}

@@ -1,0 +1,37 @@
+{
+  "series": "CR",
+  "number": "00015",
+  "issue_date": "2026-08-16",
+  "issuer_tax_id": "B12345674",
+  "customer": {
+    "tax_id": "A11111119",
+    "name": "Cliente Corpus SA",
+    "address": {
+      "street": "Calle Industria 1",
+      "city": "Madrid",
+      "postal_code": "28001",
+      "country": "ES"
+    }
+  },
+  "lines": [
+    {
+      "description": "Consulting services",
+      "quantity": 1,
+      "unit_price": 115.0,
+      "total_amount": 115.0
+    }
+  ],
+  "taxes": [
+    {
+      "tax_type": "IVA",
+      "tax_rate": 21.0,
+      "base_amount": 115.0,
+      "tax_amount": 24.15
+    }
+  ],
+  "total_base": 115.0,
+  "total_tax": 24.15,
+  "total_amount": 139.15,
+  "corpus_class": "valid",
+  "tenant_id": "default"
+}
