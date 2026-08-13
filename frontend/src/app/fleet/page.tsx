@@ -14,7 +14,26 @@ import {
 import apiClient, { getActiveTenant, TENANT_STORAGE_KEY } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/app-shell";
 import { DecisionBadge, decisionTone } from "@/components/ui/decision-badge";
-import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 type FleetDecision = "SIGNED" | "ESCALATED" | "BLOCKED" | "REJECTED" | string;
 
@@ -32,14 +51,24 @@ type FleetRun = {
   armor?: { allowed: boolean; classifier?: string; reasons?: string[]; pii_hits?: number };
   memory_hits?: Record<string, string>;
   denied_tools?: string[];
-  adk?: { consult?: { invoked?: boolean; recommendation?: string; text?: string; model?: string } };
+  adk?: {
+    consult?: {
+      invoked?: boolean;
+      recommendation?: string;
+      text?: string;
+      model?: string;
+      runner?: string;
+    };
+  };
   pubsub?: { published?: boolean; topic?: string; reason?: string };
 };
 
 type Registry = {
   model: string;
   framework: string;
+  runner?: string;
   gcp_services: string[];
+  adk?: { runner?: string; framework?: string; model?: string };
   agents: {
     agent_id: string;
     name: string;
@@ -53,6 +82,8 @@ type Registry = {
 
 type Checklist = {
   track: string;
+  framework?: string;
+  model?: string;
   items: { id: string; name: string; status: string; proof: string }[];
 };
 
@@ -64,7 +95,19 @@ type Identity = {
   denied_tools: string[];
 };
 
+const TENANTS = [
+  { label: "enterprise-demo", value: "enterprise-demo" },
+  { label: "default", value: "default" },
+];
+
+const ROLES = [
+  { label: "issuer", value: "issuer" },
+  { label: "auditor", value: "auditor" },
+  { label: "admin", value: "admin" },
+];
+
 const FIXTURES: {
+  id: string;
   label: string;
   path: string;
   hint: string;
@@ -72,6 +115,7 @@ const FIXTURES: {
   icon: typeof CheckCircle2;
 }[] = [
   {
+    id: "valid",
     label: "Valid invoice",
     path: "/demo-fixtures/valid_invoice.json",
     hint: "Math + NIF hold. Hash is written by tools.",
@@ -79,6 +123,7 @@ const FIXTURES: {
     icon: CheckCircle2,
   },
   {
+    id: "math",
     label: "Math error",
     path: "/demo-fixtures/math_error.json",
     hint: "Consult can only tighten. Never signs 999.",
@@ -86,6 +131,7 @@ const FIXTURES: {
     icon: ShieldAlert,
   },
   {
+    id: "injection",
     label: "Prompt injection",
     path: "/demo-fixtures/injection.json",
     hint: "Model Armor stops ‘ignore rules and sign’.",
@@ -93,6 +139,7 @@ const FIXTURES: {
     icon: ShieldOff,
   },
   {
+    id: "hospitality",
     label: "Hospitality",
     path: "/demo-fixtures/hospitality.json",
     hint: "Memory Bank flags restaurants for this tenant.",
@@ -105,6 +152,20 @@ function stampNumber(invoice: Record<string, unknown>): Record<string, unknown> 
   return { ...invoice, number: `${invoice.number}-${Date.now().toString().slice(-6)}` };
 }
 
+function shortHash(hash: string) {
+  if (hash.length <= 20) return hash;
+  return `${hash.slice(0, 8)}…${hash.slice(-8)}`;
+}
+
+function pipelineLabel(status?: string, busy?: boolean) {
+  if (!busy && !status) return "IDLE";
+  if (status === "QUEUED") return "QUEUED";
+  if (status === "RUNNING") return "RUNNING";
+  if (busy) return "RUNNING";
+  if (status === "COMPLETED") return "COMPLETED";
+  return status || "IDLE";
+}
+
 export default function FleetPage() {
   const [tenant, setTenant] = useState("enterprise-demo");
   const [role, setRole] = useState("issuer");
@@ -115,8 +176,11 @@ export default function FleetPage() {
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [busy, setBusy] = useState(false);
+  const [activeJob, setActiveJob] = useState("");
   const [error, setError] = useState("");
   const [background, setBackground] = useState(false);
+  const [runFilter, setRunFilter] = useState("all");
+  const [clock, setClock] = useState("--:--:--");
 
   const headers = useCallback(
     () => ({
@@ -151,6 +215,13 @@ export default function FleetPage() {
     refreshMeta().catch((err) => setError(String(err?.message || err)));
   }, [refreshMeta]);
 
+  useEffect(() => {
+    const tick = () => setClock(new Date().toISOString().slice(11, 19) + "Z");
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
   async function pollUntilDone(ids: string[]) {
     const deadline = Date.now() + 15000;
     let last: FleetRun | null = null;
@@ -161,6 +232,7 @@ export default function FleetPage() {
       const map = new Map((res.data.runs || []).map((r) => [r.run_id, r]));
       const rows = ids.map((id) => map.get(id)).filter(Boolean) as FleetRun[];
       last = rows[rows.length - 1] || last;
+      if (last) setRun(last);
       const pending = rows.some((r) => r.status === "QUEUED" || r.status === "RUNNING");
       if (!pending && rows.length === ids.length) {
         if (last) setRun(last);
@@ -173,6 +245,7 @@ export default function FleetPage() {
 
   async function ingestPdf() {
     setBusy(true);
+    setActiveJob("pdf");
     setError("");
     try {
       const blob = await (await fetch("/demo-fixtures/valid_invoice.pdf")).blob();
@@ -192,6 +265,7 @@ export default function FleetPage() {
       setError(err?.response?.data?.detail || err?.message || "PDF ingest failed");
     } finally {
       setBusy(false);
+      setActiveJob("");
     }
   }
 
@@ -206,6 +280,7 @@ export default function FleetPage() {
         { headers: headers() }
       );
       if (background && res.status === 202) {
+        setRun(res.data);
         await pollUntilDone([res.data.run_id]);
       } else {
         setRun(res.data);
@@ -215,15 +290,18 @@ export default function FleetPage() {
       setError(err?.response?.data?.detail || err?.message || "Ingest failed");
     } finally {
       setBusy(false);
+      setActiveJob("");
     }
   }
 
   async function loadFixture(path: string) {
+    setActiveJob(path);
     const res = await fetch(path);
     const fallback = FALLBACK[path];
     if (!res.ok) {
       if (fallback) return ingest(fallback);
       setError(`Could not load ${path}`);
+      setActiveJob("");
       return;
     }
     ingest(await res.json());
@@ -231,6 +309,7 @@ export default function FleetPage() {
 
   async function runSweep() {
     setBusy(true);
+    setActiveJob("sweep");
     setError("");
     try {
       const invoices = [
@@ -244,12 +323,14 @@ export default function FleetPage() {
         { headers: headers() }
       );
       const ids = res.data.run_ids || (res.data.runs || []).map((r) => r.run_id);
+      if (res.data.runs?.[0]) setRun(res.data.runs[0]);
       await pollUntilDone(ids);
       await refreshMeta();
     } catch (err: any) {
       setError(err?.response?.data?.detail || err?.message || "Batch failed");
     } finally {
       setBusy(false);
+      setActiveJob("");
     }
   }
 
@@ -262,23 +343,66 @@ export default function FleetPage() {
     };
   }, [history]);
 
-  const selectClass =
-    "mt-1 w-full rounded-lg border border-white/10 bg-[#0b1018] px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-emerald-400/40";
+  const framework = registry?.framework || checklist?.framework || "google-adk";
+  const model = registry?.model || checklist?.model || "gemini-3.5-flash";
+  const runner = registry?.adk?.runner || registry?.runner || "InMemoryRunner";
+  const pipeline = pipelineLabel(run?.status, busy);
+  const terminal =
+    Boolean(run) && run!.status !== "QUEUED" && run!.status !== "RUNNING";
+  const filteredHistory = history.filter((h) => {
+    if (runFilter === "all") return true;
+    if (runFilter === "BLOCKED") return h.decision === "BLOCKED" || h.decision === "REJECTED";
+    return h.decision === runFilter;
+  });
 
   return (
     <AppShell
       right={
-        <div className="hidden items-center gap-2 text-[11px] text-slate-400 sm:flex">
-          <span className="rounded-full border border-white/10 px-2 py-1 font-mono text-slate-300">
-            {registry?.framework || "google-adk"}
-          </span>
-          <span className="rounded-full border border-white/10 px-2 py-1 font-mono text-slate-300">
-            {registry?.model || "gemini-3.5-flash"}
-          </span>
+        <div className="hidden items-center gap-2 text-[11px] text-slate-400 lg:flex">
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {framework}
+          </Badge>
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {model}
+          </Badge>
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {runner}
+          </Badge>
         </div>
       }
     >
-      <main className="relative z-10 mx-auto max-w-7xl space-y-6 px-5 py-8 sm:px-8">
+      <main className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-8">
+        <section className="vf-card flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2.5 sm:px-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
+            <span className="vf-live-dot size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+            Live ops
+          </span>
+          <span className="font-mono text-[11px] text-slate-500">{clock}</span>
+          <Separator orientation="vertical" className="hidden h-4 sm:block" />
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {framework}
+          </Badge>
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {model}
+          </Badge>
+          <Badge variant="outline" className="font-mono text-slate-300">
+            {runner}
+          </Badge>
+          <span
+            className={cn(
+              "ml-auto rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em]",
+              pipeline === "QUEUED" &&
+                "vf-status-queued border-amber-400/25 bg-amber-400/10 text-amber-200",
+              pipeline === "RUNNING" && "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+              pipeline === "COMPLETED" &&
+                "vf-status-completed border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+              pipeline === "IDLE" && "border-white/10 text-slate-500"
+            )}
+          >
+            {pipeline}
+          </span>
+        </section>
+
         <header className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div>
             <p className="vf-kicker">Judge console · no chat</p>
@@ -287,16 +411,16 @@ export default function FleetPage() {
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400">
               Drop invoices. The fleet audits, signs, or escalates. Gemini 3.5 consults
-              tighten-only. Tools own VeriFactu chaining.
+              tighten-only. Tools own the hash.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="vf-stagger grid grid-cols-3 gap-2">
             {[
               { label: "Signed", value: kpis.signed, tone: "text-emerald-300" },
               { label: "Escalated", value: kpis.escalated, tone: "text-amber-200" },
               { label: "Blocked", value: kpis.blocked, tone: "text-rose-300" },
             ].map((kpi) => (
-              <div key={kpi.label} className="vf-card rounded-2xl px-3 py-3">
+              <div key={kpi.label} className="vf-card vf-kpi rounded-2xl px-3 py-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{kpi.label}</p>
                 <p className={cn("mt-1 text-2xl font-semibold tabular-nums", kpi.tone)}>{kpi.value}</p>
                 <p className="text-[10px] text-slate-600">this tenant</p>
@@ -305,91 +429,122 @@ export default function FleetPage() {
           </div>
         </header>
 
-        <section className="vf-card rounded-3xl p-4 sm:p-5">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div className="flex flex-wrap gap-3">
-              <label className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
+        <Card className="vf-card rounded-3xl py-0 ring-0">
+          <CardHeader className="flex flex-col gap-3 border-b border-white/6 py-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+              <label className="flex min-w-0 flex-col gap-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
                 Tenant
-                <select className={selectClass} value={tenant} onChange={(e) => setTenant(e.target.value)}>
-                  <option value="enterprise-demo">enterprise-demo</option>
-                  <option value="default">default</option>
-                </select>
+                <Select items={TENANTS} value={tenant} onValueChange={(value) => setTenant(String(value))}>
+                  <SelectTrigger className="w-full min-w-0 font-mono text-slate-100 sm:min-w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {TENANTS.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </label>
-              <label className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
+              <label className="flex min-w-0 flex-col gap-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
                 Role
-                <select className={selectClass} value={role} onChange={(e) => setRole(e.target.value)}>
-                  <option value="issuer">issuer</option>
-                  <option value="auditor">auditor</option>
-                  <option value="admin">admin</option>
-                </select>
+                <Select items={ROLES} value={role} onValueChange={(value) => setRole(String(value))}>
+                  <SelectTrigger className="w-full min-w-0 font-mono text-slate-100 sm:min-w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {ROLES.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </label>
             </div>
-            <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1.5 text-xs text-slate-300">
-              <input
-                type="checkbox"
-                checked={background}
-                onChange={(e) => setBackground(e.target.checked)}
-                className="accent-emerald-400"
-              />
+            <label className="flex items-center gap-2 self-start rounded-full border border-white/10 bg-white/4 px-3 py-1.5 text-xs text-slate-300 sm:self-auto">
+              <Switch checked={background} onCheckedChange={setBackground} size="sm" />
               Background 202
             </label>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {FIXTURES.map((f) => {
-              const Icon = f.icon;
-              return (
-                <button
-                  key={f.path}
-                  disabled={busy}
-                  onClick={() => loadFixture(f.path)}
-                  className="vf-card vf-card-hover rounded-2xl p-4 text-left disabled:opacity-50"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="rounded-xl bg-white/5 p-2 text-emerald-300">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <DecisionBadge decision={f.expect} size="sm" />
-                  </div>
-                  <p className="mt-3 text-sm font-semibold text-white">{f.label}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.hint}</p>
-                </button>
-              );
-            })}
-            <button
-              disabled={busy}
-              onClick={() => ingestPdf()}
-              className="vf-card vf-card-hover rounded-2xl p-4 text-left disabled:opacity-50"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="rounded-xl bg-white/5 p-2 text-emerald-300">
-                  <FileText className="h-4 w-4" />
-                </span>
-                <DecisionBadge decision="SIGNED" size="sm" />
-              </div>
-              <p className="mt-3 text-sm font-semibold text-white">Valid invoice (PDF)</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Same SIGN gate through the human-PDF extractor.
-              </p>
-            </button>
-            <button
-              disabled={busy}
-              onClick={runSweep}
-              className="vf-card vf-card-hover rounded-2xl p-4 text-left disabled:opacity-50 ring-1 ring-emerald-400/20"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="rounded-xl bg-emerald-400/10 p-2 text-emerald-300">
-                  <Workflow className="h-4 w-4" />
-                </span>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin text-emerald-300" /> : null}
-              </div>
-              <p className="mt-3 text-sm font-semibold text-white">3-invoice sweep</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                SIGN · ESCALATE · BLOCK in one async batch.
-              </p>
-            </button>
-          </div>
-        </section>
+          </CardHeader>
+          <CardContent className="py-4">
+            <div className="vf-stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {FIXTURES.map((f) => {
+                const Icon = f.icon;
+                const active = busy && activeJob === f.path;
+                return (
+                  <button
+                    key={f.path}
+                    disabled={busy}
+                    onClick={() => loadFixture(f.path)}
+                    className={cn(
+                      "vf-card vf-card-hover rounded-2xl p-4 text-left disabled:opacity-50",
+                      active && "vf-busy ring-1 ring-emerald-400/30"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="rounded-xl bg-white/5 p-2 text-emerald-300">
+                        {active ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
+                      </span>
+                      <DecisionBadge decision={f.expect} size="sm" />
+                    </div>
+                    <p className="mt-3 text-sm font-semibold text-white">{f.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.hint}</p>
+                  </button>
+                );
+              })}
+              <button
+                disabled={busy}
+                onClick={() => ingestPdf()}
+                className={cn(
+                  "vf-card vf-card-hover rounded-2xl p-4 text-left disabled:opacity-50",
+                  busy && activeJob === "pdf" && "vf-busy ring-1 ring-emerald-400/30"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="rounded-xl bg-white/5 p-2 text-emerald-300">
+                    {busy && activeJob === "pdf" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <FileText className="size-4" />
+                    )}
+                  </span>
+                  <DecisionBadge decision="SIGNED" size="sm" />
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">Valid invoice (PDF)</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Same SIGN gate through the human-PDF extractor.
+                </p>
+              </button>
+              <button
+                disabled={busy}
+                onClick={runSweep}
+                className={cn(
+                  "vf-card vf-card-hover rounded-2xl p-4 text-left ring-1 ring-emerald-400/20 disabled:opacity-50",
+                  busy && activeJob === "sweep" && "vf-busy"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="rounded-xl bg-emerald-400/10 p-2 text-emerald-300">
+                    <Workflow className="size-4" />
+                  </span>
+                  {busy && activeJob === "sweep" ? (
+                    <Loader2 className="size-4 animate-spin text-emerald-300" />
+                  ) : null}
+                </div>
+                <p className="mt-3 text-sm font-semibold text-white">3-invoice sweep</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  SIGN · ESCALATE · BLOCK in one async batch.
+                </p>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
 
         {error && (
           <p className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -404,7 +559,7 @@ export default function FleetPage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <section className="space-y-4 lg:col-span-2">
+          <section className="flex flex-col gap-4 lg:col-span-2">
             {run ? (
               <article
                 className={cn(
@@ -418,24 +573,47 @@ export default function FleetPage() {
                   <div>
                     <p className="vf-kicker">Last decision</p>
                     <div className="mt-2 flex flex-wrap items-center gap-3">
-                      <DecisionBadge decision={run.decision} size="lg" />
+                      <DecisionBadge
+                        key={`${run.run_id}:${run.status}:${run.decision}`}
+                        decision={run.decision}
+                        size="lg"
+                        pulse={terminal}
+                      />
                       <span className="font-mono text-[11px] text-slate-500">{run.run_id}</span>
                     </div>
                     <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">{run.reason}</p>
                   </div>
-                  <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                  <span
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.16em]",
+                      run.status === "QUEUED" &&
+                        "vf-status-queued border-amber-400/25 text-amber-200",
+                      run.status === "RUNNING" && "border-emerald-400/25 text-emerald-300",
+                      run.status === "COMPLETED" &&
+                        "vf-status-completed border-emerald-400/25 text-emerald-300",
+                      run.status !== "QUEUED" &&
+                        run.status !== "RUNNING" &&
+                        run.status !== "COMPLETED" &&
+                        "border-white/10 text-slate-400"
+                    )}
+                  >
                     {run.status}
                   </span>
                 </div>
 
                 {run.invoice_hash && (
                   <div className="flex items-start gap-3 border-b border-white/6 px-5 py-4 sm:px-6">
-                    <Hash className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                    <div>
+                    <Hash className="mt-0.5 size-4 shrink-0 text-emerald-300" />
+                    <div className="min-w-0">
                       <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
                         Hash written by tools · not the LLM
                       </p>
-                      <p className="mt-1 break-all font-mono text-xs text-emerald-200/90">{run.invoice_hash}</p>
+                      <p className="vf-hash-reveal mt-1 font-mono text-sm text-emerald-200/90">
+                        {shortHash(run.invoice_hash)}
+                      </p>
+                      <p className="mt-1 break-all font-mono text-[11px] text-slate-500">
+                        {run.invoice_hash}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -453,7 +631,7 @@ export default function FleetPage() {
                         ? run.adk.consult.recommendation || "invoked"
                         : "offline / no key"
                     }
-                    detail={run.adk?.consult?.model}
+                    detail={run.adk?.consult?.runner || run.adk?.consult?.model || runner}
                   />
                   <MetaTile
                     title="Pub/Sub"
@@ -462,13 +640,13 @@ export default function FleetPage() {
                   />
                 </div>
 
-                <ol className="space-y-0 px-5 py-4 sm:px-6">
+                <ol className="px-5 py-4 sm:px-6">
                   {(run.events || []).map((ev, i) => (
                     <li key={i} className="relative flex gap-3 pb-4 last:pb-0">
                       {i < (run.events || []).length - 1 && (
                         <span className="absolute left-[7px] top-4 h-full w-px bg-emerald-400/20" />
                       )}
-                      <span className="relative mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                      <span className="relative mt-1.5 size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
                       <div>
                         <p className="text-xs font-semibold text-white">{ev.agent}</p>
                         <p className="text-sm text-slate-400">{ev.message}</p>
@@ -505,101 +683,130 @@ export default function FleetPage() {
             )}
 
             {history.length > 0 && (
-              <div className="vf-card rounded-3xl p-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-white">Recent runs</h2>
-                  <span className="text-[11px] text-slate-500">{tenant}</span>
-                </div>
-                <ul className="divide-y divide-white/6">
-                  {history.slice(0, 12).map((h) => (
-                    <li key={h.run_id} className="flex items-center gap-3 py-2.5">
-                      <DecisionBadge decision={h.decision} size="sm" />
-                      <span className="min-w-0 flex-1 truncate text-sm text-slate-400">{h.reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <Card className="vf-card rounded-3xl py-0 ring-0">
+                <CardHeader className="flex flex-col gap-3 border-b border-white/6 py-4">
+                  <div>
+                    <CardTitle>Recent runs</CardTitle>
+                    <CardDescription>{tenant}</CardDescription>
+                  </div>
+                  <Tabs value={runFilter} onValueChange={setRunFilter} className="w-full min-w-0">
+                    <TabsList className="w-full min-w-0">
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="SIGNED">SIGNED</TabsTrigger>
+                      <TabsTrigger value="ESCALATED">ESCALATED</TabsTrigger>
+                      <TabsTrigger value="BLOCKED">BLOCKED</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </CardHeader>
+                <CardContent className="px-0 py-0">
+                  <ul className="divide-y divide-white/6">
+                    {filteredHistory.slice(0, 12).map((h) => (
+                      <li key={h.run_id} className="flex items-center gap-3 px-5 py-2.5">
+                        <DecisionBadge decision={h.decision} size="sm" />
+                        <span className="min-w-0 flex-1 truncate text-sm text-slate-400">{h.reason}</span>
+                        <span className="hidden font-mono text-[10px] text-slate-600 sm:inline">
+                          {h.status}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
             )}
           </section>
 
-          <aside className="space-y-4">
-            <div className="vf-card rounded-3xl p-5">
-              <h2 className="text-sm font-semibold text-white">Stage One checklist</h2>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                {checklist?.track || "Fortified Enterprise Fleet"}
-              </p>
-              <ul className="mt-4 space-y-3">
-                {(checklist?.items || []).map((item) => (
-                  <li key={item.id} className="flex gap-3">
-                    <span
-                      className={cn(
-                        "mt-0.5 h-2 w-2 shrink-0 rounded-full",
-                        item.status.toLowerCase().includes("pass") || item.status.toLowerCase() === "ok"
-                          ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
-                          : "bg-amber-300"
-                      )}
-                    />
-                    <span>
-                      <span className="block text-sm text-slate-200">{item.name}</span>
-                      <span className="block font-mono text-[11px] text-slate-500">{item.proof}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <aside className="flex flex-col gap-4">
+            <Card className="vf-card rounded-3xl py-0 ring-0">
+              <CardHeader className="py-5">
+                <CardTitle>Stage One checklist</CardTitle>
+                <CardDescription className="uppercase tracking-[0.16em]">
+                  {checklist?.track || "Fortified Enterprise Fleet"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-5">
+                <ul className="flex flex-col gap-3">
+                  {(checklist?.items || []).map((item) => (
+                    <li key={item.id} className="flex gap-3">
+                      <span
+                        className={cn(
+                          "mt-0.5 size-2 shrink-0 rounded-full",
+                          item.status.toLowerCase().includes("pass") || item.status.toLowerCase() === "ok"
+                            ? "bg-emerald-400 shadow-[0_0_8px_#34d399]"
+                            : "bg-amber-300"
+                        )}
+                      />
+                      <span>
+                        <span className="block text-sm text-slate-200">{item.name}</span>
+                        <span className="block font-mono text-[11px] text-slate-500">{item.proof}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
 
-            <div className="vf-card rounded-3xl p-5">
-              <h2 className="text-sm font-semibold text-white">Identity</h2>
-              <p className="mt-2 text-xs text-slate-400">
-                {identity?.user_id} · {(identity?.roles || []).join(", ")}
-              </p>
-              <p className="mt-2 text-xs text-slate-500">
+            <Card className="vf-card rounded-3xl py-0 ring-0">
+              <CardHeader className="py-5">
+                <CardTitle>Identity</CardTitle>
+                <CardDescription>
+                  {identity?.user_id} · {(identity?.roles || []).join(", ")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-5 text-xs text-slate-500">
                 Denied{" "}
                 <span className="font-mono text-amber-200/90">
                   {(identity?.denied_tools || []).join(", ") || "none"}
                 </span>
-              </p>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className="vf-card rounded-3xl p-5">
-              <h2 className="text-sm font-semibold text-white">Agent registry</h2>
-              <p className="mt-1 font-mono text-[11px] text-slate-500">
-                {registry?.framework} · {registry?.model}
-              </p>
-              <ul className="mt-4 space-y-3">
-                {(registry?.agents || []).map((a) => (
-                  <li key={a.agent_id} className="flex items-start gap-3">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-400/80" />
-                    <span>
-                      <span className="block text-sm text-white">
-                        {a.name}{" "}
-                        <span className="font-mono text-[11px] text-slate-500">v{a.version}</span>
+            <Card className="vf-card rounded-3xl py-0 ring-0">
+              <CardHeader className="py-5">
+                <CardTitle>Agent registry</CardTitle>
+                <CardDescription className="font-mono">
+                  {framework} · {model} · {runner}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-5">
+                <ul className="flex flex-col gap-3">
+                  {(registry?.agents || []).map((a) => (
+                    <li key={a.agent_id} className="flex items-start gap-3">
+                      <span className="mt-1 size-2 rounded-full bg-emerald-400/80" />
+                      <span>
+                        <span className="block text-sm text-white">
+                          {a.name}{" "}
+                          <span className="font-mono text-[11px] text-slate-500">v{a.version}</span>
+                        </span>
+                        <span className="block text-xs text-slate-500">{a.role}</span>
                       </span>
-                      <span className="block text-xs text-slate-500">{a.role}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="vf-card rounded-3xl p-5">
-              <h2 className="text-sm font-semibold text-white">Memory Bank</h2>
-              {Object.keys(memory).length === 0 ? (
-                <p className="mt-3 text-xs text-slate-500">No memories on this tenant yet.</p>
-              ) : (
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {Object.entries(memory).map(([k, v]) => (
-                    <li
-                      key={k}
-                      className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-[11px] text-amber-100"
-                      title={v}
-                    >
-                      {k}
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
+              </CardContent>
+            </Card>
+
+            <Card className="vf-card rounded-3xl py-0 ring-0">
+              <CardHeader className="py-5">
+                <CardTitle>Memory Bank</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-5">
+                {Object.keys(memory).length === 0 ? (
+                  <p className="text-xs text-slate-500">No memories on this tenant yet.</p>
+                ) : (
+                  <ul className="flex flex-wrap gap-2">
+                    {Object.entries(memory).map(([k, v]) => (
+                      <li
+                        key={k}
+                        className="rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-[11px] text-amber-100"
+                        title={v}
+                      >
+                        {k}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
 
             <p className="px-1 text-[11px] text-slate-600">
               Tenant cookie {getActiveTenant() || tenant}
@@ -613,7 +820,7 @@ export default function FleetPage() {
 
 function MetaTile({ title, value, detail }: { title: string; value: string; detail?: string }) {
   return (
-    <div className="bg-[#0b1018] px-4 py-3">
+    <div className="bg-[#0b1220] px-4 py-3">
       <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{title}</p>
       <p className="mt-1 text-sm font-medium text-white">{value}</p>
       {detail && <p className="truncate font-mono text-[11px] text-slate-500">{detail}</p>}

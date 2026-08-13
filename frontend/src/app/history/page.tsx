@@ -4,7 +4,9 @@ import React from "react";
 import Link from "next/link";
 import { CheckCircle2, AlertTriangle, XCircle, Download, ExternalLink, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
-import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const FULL_HISTORY = [
   { id: 1, date: "14 Oct 2023, 10:42", issuer: "Amazon Web Services", logo: "AWS", amount: "45,20 €", status: "FIRMADO", hash: "XJ9K2M..." },
@@ -26,9 +28,9 @@ const StatusBadge = ({ status }: { status: string }) => {
 
   return (
     <span className={cn("inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold", styles[status])}>
-      {status === "FIRMADO" && <CheckCircle2 className="h-3 w-3" />}
-      {status === "REVISAR" && <AlertTriangle className="h-3 w-3" />}
-      {status === "RECHAZADO" && <XCircle className="h-3 w-3" />}
+      {status === "FIRMADO" && <CheckCircle2 className="size-3" />}
+      {status === "REVISAR" && <AlertTriangle className="size-3" />}
+      {status === "RECHAZADO" && <XCircle className="size-3" />}
       {status}
     </span>
   );
@@ -37,55 +39,73 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function HistoryPage() {
   return (
     <AppShell>
-      <main className="relative z-10 mx-auto max-w-6xl space-y-8 px-5 py-10 sm:px-8">
+      <main className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="vf-kicker">Product ledger</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Historial</h1>
-            <p className="mt-1 text-sm text-slate-500">Sample Smart Audit rows. Live fleet decisions are on /fleet.</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Ledger</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Mock Smart Audit rows. Not live evidence. Live fleet decisions are on /fleet.
+            </p>
           </div>
+          <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-100">
+            MOCK
+          </Badge>
         </div>
 
-        <Link
-          href="/fleet"
-          className="vf-card vf-card-hover flex items-center justify-between gap-4 rounded-2xl px-5 py-4"
+        <Button
+          render={<Link href="/fleet" />}
+          nativeButton={false}
+          variant="ghost"
+          className="vf-card vf-card-hover h-auto w-full justify-between rounded-2xl px-5 py-4 text-left"
         >
-          <div>
-            <p className="text-sm font-semibold text-white">Live SIGN / ESCALATE / BLOCK runs</p>
-            <p className="text-xs text-slate-500">This table is a product mock. The contest console is /fleet.</p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-emerald-300" />
-        </Link>
+          <span>
+            <span className="block text-sm font-semibold text-white">Live SIGN / ESCALATE / BLOCK runs</span>
+            <span className="block text-xs font-normal text-slate-500">
+              This table is a product mock. The contest console is /fleet.
+            </span>
+          </span>
+          <ArrowRight data-icon="inline-end" className="text-emerald-300" />
+        </Button>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="vf-stagger grid grid-cols-3 gap-3">
           <div className="vf-card rounded-2xl p-5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total</p>
             <p className="mt-2 text-3xl font-semibold text-white">{FULL_HISTORY.length}</p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
           </div>
           <div className="vf-card rounded-2xl p-5 ring-1 ring-emerald-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/80">Firmadas</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/80">Signed</p>
             <p className="mt-2 text-3xl font-semibold text-emerald-300">
               {FULL_HISTORY.filter((h) => h.status === "FIRMADO").length}
             </p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
           </div>
           <div className="vf-card rounded-2xl p-5 ring-1 ring-amber-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/80">Pendientes</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/80">Pending</p>
             <p className="mt-2 text-3xl font-semibold text-amber-200">
               {FULL_HISTORY.filter((h) => h.status === "REVISAR").length}
             </p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate-600">mock</p>
           </div>
         </div>
 
         <section className="vf-card overflow-hidden rounded-[2rem]">
+          <div className="flex items-center justify-between border-b border-white/6 px-5 py-3">
+            <p className="text-xs font-semibold text-slate-300">Sample rows</p>
+            <Badge variant="outline" className="text-[10px] text-amber-100">
+              MOCK — not live evidence
+            </Badge>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-white/6 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-4">Fecha</th>
-                  <th className="px-2 py-4">Emisor</th>
-                  <th className="px-2 py-4 text-right">Importe</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-2 py-4">Issuer</th>
+                  <th className="px-2 py-4 text-right">Amount</th>
                   <th className="px-2 py-4">Hash</th>
-                  <th className="px-2 py-4">Estado</th>
+                  <th className="px-2 py-4">Status</th>
                   <th className="px-6 py-4" />
                 </tr>
               </thead>
@@ -95,7 +115,7 @@ export default function HistoryPage() {
                     <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
                     <td className="px-2 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/6 text-[10px] font-black text-white">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-white/6 text-[10px] font-black text-white">
                           {item.logo}
                         </div>
                         <span className="text-sm font-semibold text-slate-200">{item.issuer}</span>
@@ -109,10 +129,10 @@ export default function HistoryPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1 text-slate-500">
                         <span className="rounded-lg p-2">
-                          <ExternalLink className="h-4 w-4" />
+                          <ExternalLink className="size-4" />
                         </span>
                         <span className="rounded-lg p-2">
-                          <Download className="h-4 w-4" />
+                          <Download className="size-4" />
                         </span>
                       </div>
                     </td>

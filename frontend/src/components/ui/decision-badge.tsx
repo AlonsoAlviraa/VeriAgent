@@ -1,4 +1,4 @@
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
 export function decisionTone(decision?: string) {
   if (decision === "SIGNED") return "signed";
@@ -10,9 +10,11 @@ export function decisionTone(decision?: string) {
 export function DecisionBadge({
   decision,
   size = "md",
+  pulse = false,
 }: {
   decision?: string;
   size?: "sm" | "md" | "lg";
+  pulse?: boolean;
 }) {
   const tone = decisionTone(decision);
   return (
@@ -25,12 +27,13 @@ export function DecisionBadge({
         tone === "signed" && "bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/30",
         tone === "blocked" && "bg-rose-400/15 text-rose-300 ring-1 ring-rose-400/30",
         tone === "escalated" && "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/30",
-        tone === "idle" && "bg-white/5 text-slate-400 ring-1 ring-white/10"
+        tone === "idle" && "bg-white/5 text-slate-400 ring-1 ring-white/10",
+        pulse && tone !== "idle" && "vf-decision-pulse"
       )}
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full",
+          "size-1.5 rounded-full",
           tone === "signed" && "bg-emerald-400 shadow-[0_0_8px_#34d399]",
           tone === "blocked" && "bg-rose-400 shadow-[0_0_8px_#fb7185]",
           tone === "escalated" && "bg-amber-300 shadow-[0_0_8px_#fbbf24]",
