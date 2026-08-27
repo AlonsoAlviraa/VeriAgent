@@ -15,4 +15,6 @@ Open Registry: four published agents, `gemini-3.5-flash`, google-adk. Memory Ban
 UI → Pub/Sub → Gateway → ADK orchestrator → tools → `core_engine` (hash/XML) → Cloud SQL. Gemini never writes the hash.
 
 3:20–4:00 — Proof  
-Browser URL `*.run.app/fleet`. GCP console Cloud Run service. Repo + CONTEST.md disclosure. “Built for All Things Agentic.”
+GCP console: Cloud Run service + Pub/Sub subscription `invoice-received-push`. If a human deploy is live, show that browser URL — do not invent a `*.run.app` host. Repo + CONTEST.md disclosure. “Built for All Things Agentic.”
+
+Spoken words (read over this take): [`demo/voiceover.md`](voiceover.md). One unedited English take ≤ 4 minutes.

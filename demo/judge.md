@@ -23,6 +23,8 @@ Headers the UI sets: `X-Tenant-Id: enterprise-demo`, `X-User-Id: judge`, `X-Role
 
 `curl http://localhost:8000/health` must include those three strings.
 
-## Video beats (`demo/script.md`)
+## Video beats (`demo/script.md` + spoken `demo/voiceover.md`)
 
-Keep one unedited English take ≤ 4:00. Add 15s PDF and 20s background sweep. Overlay: consult-only Runner; kernel hashes. Hosted take: Cloud Run URL + Pub/Sub subscription `invoice-received-push`.
+Keep one unedited English take ≤ 4:00. Add 15s PDF and 20s background sweep. Overlay: consult-only Runner; kernel hashes. Hosted take: Cloud Run console + Pub/Sub subscription `invoice-received-push`. Do not invent a live URL.
+
+Paste-ready Devpost / blog / social: `demo/devpost.md`, `demo/blog.md`, `demo/social.md`.

@@ -28,12 +28,14 @@ The following existed before this hackathon and is **disclosed** as a determinis
 
 **Built during the submission period (this project):**
 
-- ADK multi-agent fleet (`ai_agents/adk/`)
+- ADK multi-agent fleet (`ai_agents/adk/`), including `runner.py` (`InMemoryRunner` on consult-only Agent `fiscal_fleet_consult`) and `queue.py` (202 QUEUED / FIFO / Pub/Sub push)
 - Agent Gateway, Model Armor, Memory Bank, Agent Registry, OpenTelemetry spans
-- `POST /api/v1/fleet/ingest` and the `/fleet` UI
-- Cloud Run / Cloud SQL / Pub/Sub deploy (`infra/`)
+- `POST /api/v1/fleet/ingest` (`wait=false` async), PDF `file_id` path, and the `/fleet` UI
+- Cloud Run / Cloud SQL / Pub/Sub deploy (`infra/deploy.sh` sets `DATABASE_URL` and push subscription `invoice-received-push`)
 
 The LLM never writes the invoice hash. That is the architectural split: probabilistic agents decide SIGN / REJECT / ESCALATE; the kernel is deterministic.
+
+Devpost paste, spoken voiceover (≤ 4 minutes), blog, and social drafts: `demo/devpost.md`, `demo/voiceover.md`, `demo/blog.md`, `demo/social.md`. Do not invent a live `*.run.app` URL.
 
 ## Judge login (local / Cloud Run)
 

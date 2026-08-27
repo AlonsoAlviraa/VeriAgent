@@ -86,5 +86,10 @@ See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $
 ## Docs
 
 - [`CONTEST.md`](CONTEST.md) — track, disclosure, fixtures, judge login
-- [`demo/script.md`](demo/script.md) — 4-minute unedited video
+- [`demo/devpost.md`](demo/devpost.md) — Devpost fields (English, paste-ready)
+- [`demo/judge.md`](demo/judge.md) — 5-minute local click path
+- [`demo/script.md`](demo/script.md) — 4-minute unedited video beats
+- [`demo/voiceover.md`](demo/voiceover.md) — spoken English voiceover (≤ 4:00)
+- [`demo/blog.md`](demo/blog.md) — optional Stage Three blog draft
+- [`demo/social.md`](demo/social.md) — `#AllThingsAgenticHackathon` draft
 - [`README.es.md`](README.es.md) — Spanish notes

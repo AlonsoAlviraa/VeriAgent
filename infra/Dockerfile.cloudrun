@@ -1,0 +1,3 @@
+FROM europe-west1-docker.pkg.dev/project-89d8567f-49f2-48bc-a00/verifleet/verifleet@sha256:a91f27f78303451bc4d3ac8bd754d0da6fb77dd57a54f3f4a12342b6ee9d82e4
+ENV PYTHONUNBUFFERED=1
+CMD ["uvicorn", "core_engine.main:app", "--host", "0.0.0.0", "--port", "8080"]
