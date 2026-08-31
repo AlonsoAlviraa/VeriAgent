@@ -28,6 +28,7 @@ from core_engine.control_plane.registry import TenantRegistry
 from core_engine.db.database import SessionLocal, get_db, init_db
 from core_engine.exceptions import HashContinuityError
 from core_engine.middleware.rate_limit import RateLimitMiddleware
+from core_engine.middleware.request_log import RequestLoggingMiddleware
 from core_engine.services.invoice_service import InvoiceService
 from core_engine.services.ocr import OCRService
 from core_engine.services.webhooks import WebhookEmitter
@@ -63,6 +64,8 @@ app.add_middleware(
 )
 # Rate limiting (SEC / Sprint 10): 120 req/min por IP/tenant, /health exento.
 app.add_middleware(RateLimitMiddleware, requests=120, window_seconds=60)
+# Access log last (outermost): method/path/status only — no Authorization, body, NIFs, PEMs.
+app.add_middleware(RequestLoggingMiddleware)
 
 ALLOWED_EXTENSIONS = {".pdf", ".xml"}
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")

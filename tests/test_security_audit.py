@@ -28,8 +28,19 @@ class TestSecurityHeaders:
         h = r.headers
         assert h.get("X-Content-Type-Options") == "nosniff"
         assert h.get("X-Frame-Options") == "DENY"
-        assert "max-age" in h.get("Strict-Transport-Security", "")
-        assert "default-src" in h.get("Content-Security-Policy", "")
+        assert h.get("Strict-Transport-Security") == (
+            "max-age=31536000; includeSubDomains"
+        )
+        assert h.get("Content-Security-Policy") == "default-src 'self'"
+
+    def test_health_headers_survive_repeated_gets(self):
+        """Limiter exempts /health; nosniff/DENY/HSTS/CSP stay on every response."""
+        for _ in range(3):
+            h = client.get("/health").headers
+            assert h.get("X-Content-Type-Options") == "nosniff"
+            assert h.get("X-Frame-Options") == "DENY"
+            assert "max-age=31536000" in h.get("Strict-Transport-Security", "")
+            assert h.get("Content-Security-Policy") == "default-src 'self'"
 
 
 class TestUploadSecurity:
@@ -75,6 +86,42 @@ class TestRateLimiting:
         # Aunque hagamos muchas peticiones, /health siempre responde 200.
         codes = [client.get("/health").status_code for _ in range(5)]
         assert all(c == 200 for c in codes)
+
+    def test_production_limiter_does_not_exempt_ingest(self):
+        """Wired RateLimitMiddleware stays on; ingest is not in exempt_paths."""
+        from core_engine.middleware.rate_limit import RateLimitMiddleware
+
+        wired = [
+            m for m in app.user_middleware if m.cls is RateLimitMiddleware
+        ]
+        assert wired, "RateLimitMiddleware must stay enabled on the fleet app"
+        kwargs = wired[0].kwargs
+        exempt = set(kwargs.get("exempt_paths") or ["/health"])
+        assert "/health" in exempt
+        assert "/api/v1/fleet/ingest" not in exempt
+        assert "/api/v1/fleet/ingest/batch" not in exempt
+
+    def test_fleet_ingest_returns_429_without_disabling_limiter(self):
+        """POST /api/v1/fleet/ingest is limited by RateLimitMiddleware (still enabled)."""
+        from fastapi import FastAPI
+
+        from core_engine.middleware.rate_limit import RateLimitMiddleware
+
+        ingest_app = FastAPI()
+
+        @ingest_app.post("/api/v1/fleet/ingest")
+        def ingest():
+            return {"status": "ok"}
+
+        ingest_app.add_middleware(RateLimitMiddleware, requests=2, window_seconds=60)
+        c = TestClient(ingest_app)
+        assert c.post("/api/v1/fleet/ingest", json={"invoice": {}}).status_code == 200
+        assert c.post("/api/v1/fleet/ingest", json={"invoice": {}}).status_code == 200
+        limited = c.post("/api/v1/fleet/ingest", json={"invoice": {}})
+        assert limited.status_code == 429
+        assert limited.json()["error_code"] == "RATE_LIMITED"
+        assert limited.headers.get("Retry-After") is not None
+        assert limited.headers.get("X-RateLimit-Remaining") == "0"
 
 
 class TestRBACProtection:

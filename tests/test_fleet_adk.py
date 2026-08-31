@@ -151,6 +151,32 @@ def test_auditor_role_cannot_sign(db_session):
     assert "invoice.sign" in result.denied_tools
 
 
+def test_fleet_ingest_http_auditor_cannot_sign(db_session):
+    """Tenant isolation at the HTTP edge: auditor must not invoice.sign."""
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        res = client.post(
+            "/api/v1/fleet/ingest",
+            json={"invoice": _valid_invoice(number="104-http")},
+            headers={"X-Tenant-Id": "default", "X-Roles": "auditor"},
+        )
+        assert res.status_code == 200, res.text
+        body = res.json()
+        assert body["decision"] == "ESCALATED"
+        assert body["signed"] is False
+        assert "invoice.sign" in body["reason"]
+        assert "invoice.sign" in body["denied_tools"]
+        assert db_session.query(InvoiceModel).count() == 0
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_gateway_blocks_aeat_for_auditor():
     d = gateway.allows("aeat.submit", ["auditor"])
     assert d.allowed is False

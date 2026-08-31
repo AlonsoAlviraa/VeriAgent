@@ -21,6 +21,12 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
+def _safe_log(text: object) -> str:
+    from shared.redact import sanitize_log
+
+    return sanitize_log(str(text) if text is not None else "")
+
+
 def _load_dotenv() -> None:
     """Cargador ligero de .env sin dependencia de python-dotenv.
 
@@ -95,14 +101,19 @@ def chat_completion(
     if system_text.strip():
         payload["systemInstruction"] = {"parts": [{"text": system_text.strip()}]}
 
-    url = f"{GEMINI_BASE}/{model}:generateContent?key={api_key}"
+    url = f"{GEMINI_BASE}/{model}:generateContent"
 
     last_err = ""
     for attempt in range(retries + 1):
         try:
             import requests
 
-            r = requests.post(url, json=payload, timeout=60)
+            r = requests.post(
+                url,
+                params={"key": api_key},
+                json=payload,
+                timeout=60,
+            )
             if r.status_code == 200:
                 data = r.json()
                 candidates = data.get("candidates", [])
@@ -122,14 +133,14 @@ def chat_completion(
                 time.sleep(2 ** attempt)
                 continue
             # Error de cliente no recuperable (400, 401, 403, 404).
-            logger.error("[Gemini] Error %s: %s", r.status_code, r.text[:300])
+            logger.error("[Gemini] Error %s: %s", r.status_code, _safe_log(r.text[:300]))
             return ""
         except Exception as exc:
-            last_err = str(exc)
-            logger.warning("[Gemini] Excepción: %s", exc)
+            last_err = _safe_log(exc)
+            logger.warning("[Gemini] Excepción: %s", last_err)
             time.sleep(2 ** attempt)
 
-    logger.error("[Gemini] Fallo tras reintentos: %s", last_err)
+    logger.error("[Gemini] Fallo tras reintentos: %s", _safe_log(last_err))
     return ""
 
 

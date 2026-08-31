@@ -17,6 +17,8 @@ from pathlib import Path
 import requests
 from lxml import etree
 
+from shared.redact import sanitize_log
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 logger = logging.getLogger(__name__)
@@ -153,9 +155,9 @@ class AEATConnector:
             key_file = Path(self.key_path)
 
             if not cert_file.exists():
-                raise FileNotFoundError(f"Certificado no encontrado: {cert_file}")
+                raise FileNotFoundError("AEAT certificate file not found")
             if not key_file.exists():
-                raise FileNotFoundError(f"Clave privada no encontrada: {key_file}")
+                raise FileNotFoundError("AEAT private key file not found")
 
             session.cert = (str(cert_file), str(key_file))
             logger.info("[AEAT] mTLS configurado con certificados")
@@ -177,7 +179,7 @@ class AEATConnector:
         logger.info(f"[AEAT] Enviando factura: {invoice.series}-{invoice.number}")
 
         soap_xml = invoice.to_soap_xml()
-        logger.debug(f"[AEAT] SOAP Request:\n{soap_xml[:500]}...")
+        # Never log SOAP (NIF + full hash). Request body is omitted on purpose.
 
         headers = {
             "Content-Type": "text/xml; charset=utf-8",
@@ -205,25 +207,25 @@ class AEATConnector:
                 )
 
         except requests.exceptions.SSLError as e:
-            logger.error(f"[AEAT] SSL Error (mTLS failed): {e}")
+            logger.error("[AEAT] SSL Error (mTLS failed): %s", sanitize_log(str(e)))
             return AEATResponse(
                 status="ERROR",
                 error_code="SSL_ERROR",
-                error_description=f"Fallo mTLS. Verifica el certificado. Detalle: {str(e)}"
+                error_description="Fallo mTLS. Verifica el certificado.",
             )
         except requests.exceptions.ConnectionError as e:
-            logger.error(f"[AEAT] Connection Error: {e}")
+            logger.error("[AEAT] Connection Error: %s", sanitize_log(str(e)))
             return AEATResponse(
                 status="ERROR",
                 error_code="CONNECTION_ERROR",
-                error_description=f"No se pudo conectar con AEAT: {str(e)}"
+                error_description="No se pudo conectar con AEAT",
             )
         except Exception as e:
-            logger.exception(f"[AEAT] Unexpected Error: {e}")
+            logger.exception("[AEAT] Unexpected Error: %s", sanitize_log(str(e)))
             return AEATResponse(
                 status="ERROR",
                 error_code="UNKNOWN_ERROR",
-                error_description=str(e)
+                error_description=sanitize_log(str(e)),
             )
 
     def _parse_response(self, xml_response: str) -> AEATResponse:
@@ -442,8 +444,8 @@ if __name__ == "__main__":
 
     print(f"\n[Config]")
     print(f"  Endpoint: {ENDPOINTS['SANDBOX']}")
-    print(f"  Certificado: {cert_path} (exists: {Path(cert_path).exists()})")
-    print(f"  Clave: {key_path} (exists: {Path(key_path).exists()})")
+    print(f"  Certificado: {'configured' if Path(cert_path).exists() else 'missing'}")
+    print(f"  Clave: {'configured' if Path(key_path).exists() else 'missing'}")
 
     try:
         connector = AEATConnector(
@@ -467,8 +469,7 @@ if __name__ == "__main__":
             invoice_hash="4f3a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a",
             previous_hash=None
         )
-        print(f"\n  SOAP XML Preview:")
-        print(demo_invoice.to_soap_xml()[:600] + "...")
+        print(f"\n  SOAP XML Preview: [omitted — contains NIF/hash]")
 
     except FileNotFoundError as e:
         print(f"\n[WARN] Certificados no encontrados: {e}")
