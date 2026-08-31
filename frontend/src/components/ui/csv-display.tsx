@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Copy, Check, ShieldCheck } from "lucide-react";
+import { useLocale } from "@/components/i18n/locale-provider";
 
 interface CSVDisplayProps {
     csv: string;
@@ -9,6 +10,7 @@ interface CSVDisplayProps {
 }
 
 export function CSVDisplay({ csv, compact = false }: CSVDisplayProps) {
+    const { t } = useLocale();
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -25,7 +27,7 @@ export function CSVDisplay({ csv, compact = false }: CSVDisplayProps) {
                 <button
                     onClick={handleCopy}
                     className="p-1 hover:bg-emerald-100 rounded transition-colors"
-                    title="Copiar CSV"
+                    title={t("csv.copyTitle")}
                 >
                     {copied ? (
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -43,7 +45,7 @@ export function CSVDisplay({ csv, compact = false }: CSVDisplayProps) {
                 <div className="flex items-center gap-2">
                     <ShieldCheck className="w-5 h-5 text-emerald-600" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
-                        Codigo Seguro de Verificacion (CSV)
+                        {t("csv.title")}
                     </span>
                 </div>
                 <button
@@ -52,11 +54,11 @@ export function CSVDisplay({ csv, compact = false }: CSVDisplayProps) {
                 >
                     {copied ? (
                         <>
-                            <Check className="w-4 h-4" /> Copiado
+                            <Check className="w-4 h-4" /> {t("csv.copied")}
                         </>
                     ) : (
                         <>
-                            <Copy className="w-4 h-4" /> Copiar
+                            <Copy className="w-4 h-4" /> {t("csv.copy")}
                         </>
                     )}
                 </button>
@@ -67,7 +69,7 @@ export function CSVDisplay({ csv, compact = false }: CSVDisplayProps) {
                 </code>
             </div>
             <p className="text-[10px] text-emerald-600 font-medium">
-                Este codigo acredita que Hacienda ha recibido y validado la factura.
+                {t("csv.footnote")}
             </p>
         </div>
     );

@@ -13,7 +13,7 @@ pip install -r requirements.txt
 $env:DATABASE_URL = "sqlite:///verifleet.db"
 $env:VERIAGENT_AUTO_INIT_DB = "1"
 $env:VERIFLEET_SKIP_LLM = "1"
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Second terminal:

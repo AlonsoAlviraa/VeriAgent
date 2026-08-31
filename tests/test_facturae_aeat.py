@@ -4,6 +4,7 @@ from datetime import date
 
 from core_engine.aeat_connector import (
     build_registro_alta_payload,
+    is_aeat_remitting,
     send_invoice_to_aeat,
 )
 from core_engine.services.facturae import FacturaeService
@@ -48,6 +49,12 @@ def test_facturae_xml_and_qr_markers():
     fields = FacturaeService.huella_fields(inv, "PREV")
     assert fields["IDEmisorFactura"] == "B12345674"
     assert fields["Huella"] == "PREV"
+
+
+def test_aeat_remitting_fail_closed_without_certs(monkeypatch):
+    monkeypatch.delenv("AEAT_CERT_PATH", raising=False)
+    monkeypatch.delenv("AEAT_KEY_PATH", raising=False)
+    assert is_aeat_remitting() is False
 
 
 def test_aeat_fail_closed_missing_certs(monkeypatch):

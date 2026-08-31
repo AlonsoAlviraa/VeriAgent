@@ -57,8 +57,10 @@ pip install -r requirements.txt
 
 set DATABASE_URL=sqlite:///verifleet.db
 set VERIAGENT_AUTO_INIT_DB=1
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+One process only (`--workers 1` is the default). Do not start a second uvicorn. Bind **127.0.0.1** (not `localhost`/IPv6) so the Next.js proxy and curl hit the same FIFO. After pulling queue/proxy changes, **stop both leftover PIDs and restart** uvicorn so the worker code loads.
 
 Unix: `export DATABASE_URL=sqlite:///verifleet.db` and `export VERIAGENT_AUTO_INIT_DB=1`.
 Optional Postgres: `docker compose up db -d`.
@@ -67,7 +69,19 @@ Optional Postgres: `docker compose up db -d`.
 cd frontend && npm install && npm run dev
 ```
 
-Open **http://localhost:3000/fleet**
+Open **http://127.0.0.1:3000/fleet** — that is the operator console. Landing (`/`) only sells and links here.
+
+Browser `/api/v1` is proxied by `frontend/src/app/api/v1/[...path]/route.ts` (not a `next.config` rewrite). After pulling this, **restart `npm run dev`** so the rewrite is gone, and **recycle uvicorn** so the FIFO + list-drain code loads.
+
+```bash
+python -m verifleet ingest frontend/public/demo-fixtures/valid_invoice.json
+```
+
+Prints `SIGNED` and a shortened hash (`first8…last8`). Same local ingest as `/fleet`. Never prints API keys.
+
+This repo does **not** ship a hosted Cloud Run URL. Deploy is a human step (`infra/README.md`) after you have a billed project.
+
+| Header | Judge value |
 
 | Header | Judge value |
 |---|---|
@@ -81,7 +95,7 @@ python -m pytest tests/test_fleet_adk.py tests/test_api.py -q
 
 ## Deploy (Google Cloud)
 
-See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $150 credits). After deploy, the Cloud Run URL is the hosted project for Devpost.
+See [`infra/README.md`](infra/README.md). You need a billed project (hackathon $150 credits). Do not invent a `*.run.app` URL in docs or the UI until a human deploy exists.
 
 ## Docs
 

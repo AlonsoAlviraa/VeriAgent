@@ -7,10 +7,12 @@ import os
 from .agents import adk_status
 from .config import GCP_SERVICES, GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK
 from .pubsub import topic_name
+from core_engine.aeat_connector import is_aeat_remitting
 
 
 def checklist() -> dict:
     adk = adk_status()
+    remitting = is_aeat_remitting()
     return {
         "track": "Fortified Enterprise Fleet",
         "model": GEMINI_MODEL,
@@ -78,6 +80,16 @@ def checklist() -> dict:
                 "proof": "run_orchestrator() → InMemoryRunner(fiscal_fleet_consult); skipped when VERIFLEET_SKIP_LLM=1; cannot loosen gates",
             },
             {
+                "id": "aeat",
+                "name": "AEAT remittance",
+                "status": "live" if remitting else "not_on_path",
+                "proof": (
+                    "fleet ingest is remitting to AEAT"
+                    if remitting
+                    else "aeat_remitting=false — fleet ingest signs locally and does not call AEAT"
+                ),
+            },
+            {
                 "id": "pubsub",
                 "name": "Pub/Sub",
                 "status": "live" if topic_name() else "ready",
@@ -85,6 +97,7 @@ def checklist() -> dict:
             },
         ],
         "llm_live": not _skip_llm(),
+        "aeat_remitting": is_aeat_remitting(),
         "pubsub_topic": topic_name() or None,
         "project": os.getenv("GOOGLE_CLOUD_PROJECT") or None,
     }

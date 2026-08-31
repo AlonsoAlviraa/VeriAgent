@@ -340,6 +340,15 @@ def build_registro_alta_payload(
     }
 
 
+def is_aeat_remitting() -> bool:
+    """Safe public boolean: whether this process is remitting to Hacienda.
+
+    Fail-closed. Never returns cert paths or secrets.
+    Fleet ingest never calls send_invoice_to_aeat (local SHA-256 sign only).
+    """
+    return False
+
+
 def send_invoice_to_aeat(
     issuer_nif: str,
     issuer_name: str,

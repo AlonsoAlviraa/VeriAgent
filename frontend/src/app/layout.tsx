@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import QueryProvider from "@/components/providers/query-provider";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,15 +16,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "VeriFleet — Fortified Enterprise Fleet",
+    default: "The LLM never writes the hash — VeriFleet",
     template: "%s · VeriFleet",
   },
   description:
-    "Autonomous fiscal-compliance fleet for Spanish VeriFactu. Gemini 3.5 + Google ADK. The LLM never writes the hash.",
+    "VeriFactu fleet. Consult is tighten-only. Tools write the hash. The LLM never writes the hash.",
+  openGraph: {
+    title: "The LLM never writes the hash — VeriFleet",
+    description:
+      "VeriFactu fleet. Consult is tighten-only. Tools write the hash. The LLM never writes the hash.",
+  },
   icons: { icon: "/favicon.ico" },
 };
 
-import QueryProvider from "@/components/providers/query-provider";
+export const viewport: Viewport = {
+  colorScheme: "light",
+  themeColor: "#fbfbf9",
+};
 
 export default function RootLayout({
   children,
@@ -30,14 +40,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="es" className="light" style={{ colorScheme: "only light" }}>
+      <head>
+        <meta name="color-scheme" content="only light" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ backgroundColor: "#fbfbf9", color: "#111111" }}
       >
         <QueryProvider>
-          {children}
+          <LocaleProvider>{children}</LocaleProvider>
         </QueryProvider>
       </body>
     </html>
   );
 }
+

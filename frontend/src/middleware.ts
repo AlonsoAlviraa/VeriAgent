@@ -10,7 +10,11 @@ export default auth((req) => {
     path.startsWith("/fleet") ||
     path.startsWith("/history") ||
     path.startsWith("/brand") ||
-    path.startsWith("/demo-fixtures");
+    path.startsWith("/demo-fixtures") ||
+    path.startsWith("/tutorial") ||
+    path.startsWith("/setup") ||
+    path.startsWith("/security") ||
+    path.startsWith("/pricing");
 
   if (!isAuth && !isAuthPage && !isJudgeSurface) {
     return NextResponse.redirect(new URL("/auth/login", req.url));

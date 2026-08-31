@@ -324,7 +324,10 @@ def test_compliance_and_identity_api(db_session):
 
     sheet = checklist()
     ids = {i["id"] for i in sheet["items"]}
-    assert {"registry", "runtime", "memory", "identity", "gateway", "armor", "otel", "gemini", "adk"} <= ids
+    assert {"registry", "runtime", "memory", "identity", "gateway", "armor", "otel", "gemini", "adk", "runner", "aeat"} <= ids
+    assert sheet["aeat_remitting"] is False
+    aeat = next(i for i in sheet["items"] if i["id"] == "aeat")
+    assert aeat["status"] == "not_on_path"
     who = identity("enterprise-demo", "judge", ["auditor"])
     assert "invoice.sign" in who["denied_tools"]
     assert "aeat.submit" in who["denied_tools"]
@@ -460,6 +463,81 @@ def test_async_ingest_api_202(db_session):
         assert done.decision == "SIGNED"
         got = client.get(f"/api/v1/fleet/runs/{body['run_id']}", headers=headers)
         assert got.json()["status"] == "COMPLETED"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_ingest_wait_false_in_json_body(db_session):
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest",
+            json={"invoice": _valid_invoice(number="511"), "wait": False},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        assert res.json()["status"] == "QUEUED"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_get_run_drains_queued_row(db_session):
+    """Poll GET /runs/{id} must complete a QUEUED row (FIFO may live on another worker)."""
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest?wait=false",
+            json={"invoice": _valid_invoice(number="512")},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        rid = res.json()["run_id"]
+        assert runtime.get_run(db_session, rid, tenant_id="default")["status"] == "QUEUED"
+        got = client.get(f"/api/v1/fleet/runs/{rid}", headers=headers)
+        assert got.status_code == 200
+        assert got.json()["status"] == "COMPLETED"
+        assert got.json()["decision"] == "SIGNED"
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_list_runs_drains_queued_row(db_session):
+    """GET /runs (list) must settle QUEUED — browser poll often uses the list."""
+    from core_engine.main import app, get_db
+
+    def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    try:
+        client = TestClient(app)
+        headers = {"X-Tenant-Id": "default", "X-Roles": "issuer"}
+        res = client.post(
+            "/api/v1/fleet/ingest?wait=false",
+            json={"invoice": _valid_invoice(number="513")},
+            headers=headers,
+        )
+        assert res.status_code == 202
+        rid = res.json()["run_id"]
+        listing = client.get("/api/v1/fleet/runs", headers=headers)
+        assert listing.status_code == 200
+        found = next(r for r in listing.json()["runs"] if r["run_id"] == rid)
+        assert found["status"] == "COMPLETED"
+        assert found["decision"] == "SIGNED"
     finally:
         app.dependency_overrides.clear()
 
@@ -630,6 +708,7 @@ def test_health_stage_one_strings():
     assert body["framework"] == "google-adk"
     assert body["runner"] == "InMemoryRunner"
     assert body["track"] == "Fortified Enterprise Fleet"
+    assert body["aeat_remitting"] is False
 
 
 def test_compliance_includes_runner():
@@ -637,7 +716,9 @@ def test_compliance_includes_runner():
 
     ids = {i["id"] for i in checklist()["items"]}
     assert "runner" in ids
+    assert "aeat" in ids
     assert checklist()["framework"] == "google-adk"
+    assert checklist()["aeat_remitting"] is False
 
 
 def test_fleet_api_ingest_and_get(db_session):
@@ -680,3 +761,32 @@ def test_fleet_api_ingest_and_get(db_session):
         assert reg.json()["model"] == GEMINI_MODEL
     finally:
         app.dependency_overrides.clear()
+
+
+def test_fifo_worker_drains_second_job_after_idle(monkeypatch):
+    """Regression: drain used to return and leave _WORKER_STARTED set, so job 2 never ran."""
+    import time
+
+    from ai_agents.adk import queue as fleet_queue
+
+    executed: list[str] = []
+
+    def _fake_execute(run_id, db=None):
+        executed.append(run_id)
+        return type("R", (), {"run_id": run_id})()
+
+    monkeypatch.setattr(fleet_queue, "execute", _fake_execute)
+    with fleet_queue._COND:
+        fleet_queue._QUEUE.clear()
+
+    fleet_queue._offer("job-a")
+    deadline = time.time() + 2
+    while "job-a" not in executed and time.time() < deadline:
+        time.sleep(0.02)
+    assert executed == ["job-a"]
+
+    fleet_queue._offer("job-b")
+    deadline = time.time() + 2
+    while "job-b" not in executed and time.time() < deadline:
+        time.sleep(0.02)
+    assert executed == ["job-a", "job-b"]

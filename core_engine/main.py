@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from typing import Optional
@@ -23,6 +24,7 @@ from shared.schemas import (
 )
 from core_engine.auth.rbac import OrgContext, parse_org_context, require_roles
 from ai_agents.adk.config import GCP_SERVICES, GEMINI_MODEL, GOOGLE_AGENT_FRAMEWORK
+from core_engine.aeat_connector import is_aeat_remitting
 from core_engine.control_plane.feature_flags import PROD_AEAT_ENABLED, FeatureFlagService
 from core_engine.control_plane.registry import TenantRegistry
 from core_engine.db.database import SessionLocal, get_db, init_db
@@ -106,6 +108,7 @@ def health_check():
         "runner": "InMemoryRunner",
         "gcp_services": list(GCP_SERVICES),
         "track": "Fortified Enterprise Fleet",
+        "aeat_remitting": is_aeat_remitting(),
     }
 
 
@@ -333,11 +336,18 @@ async def test_emit_webhook(event: str = "invoice.test", invoice_id: str = "n/a"
     return emitter.emit(event, {"invoice_id": invoice_id})
 
 
-# ---------- VeriFleet (All Things Agentic / Google ADK) ----------
+def _effective_wait(query_wait: bool, body_wait: Optional[bool]) -> bool:
+    """Body wait wins when set so a proxy that drops ?wait=false still queues."""
+    if body_wait is not None:
+        return body_wait
+    return query_wait
+
+
 class FleetIngestRequest(BaseModel):
     invoice: Optional[dict] = None
     raw_text: Optional[str] = None
     file_id: Optional[str] = None
+    wait: Optional[bool] = None
 
 
 class FleetMemoryRequest(BaseModel):
@@ -347,6 +357,7 @@ class FleetMemoryRequest(BaseModel):
 
 class FleetBatchRequest(BaseModel):
     invoices: list
+    wait: Optional[bool] = None
 
 
 @app.post("/api/v1/fleet/ingest")
@@ -367,7 +378,7 @@ def fleet_ingest(
             status_code=400,
             detail="Provide invoice, raw_text, or file_id",
         )
-    if not wait:
+    if not _effective_wait(wait, body.wait):
         queued = enqueue(
             db=db,
             tenant_id=org.tenant_id,
@@ -406,11 +417,24 @@ def fleet_get_run(
     db: Session = Depends(get_db),
     org: OrgContext = Depends(get_org_context),
 ):
+    from ai_agents.adk.queue import FleetInFlight, execute
     from ai_agents.adk.runtime import get_run
 
     row = get_run(db, run_id, tenant_id=org.tenant_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Fleet run not found")
+    # Same-process drain: in-memory FIFO may live on another uvicorn worker.
+    # Poll GET from :3000 must still complete the durable fleet_runs row.
+    if row.get("status") == "QUEUED":
+        try:
+            execute(run_id, db)
+        except FleetInFlight:
+            pass
+        except KeyError:
+            pass
+        except Exception:
+            logging.getLogger("verifleet").exception("lazy execute failed for %s", run_id)
+        row = get_run(db, run_id, tenant_id=org.tenant_id) or row
     return row
 
 
@@ -430,7 +454,7 @@ def fleet_ingest_batch(
     invoices = [i for i in (body.invoices or []) if isinstance(i, dict)]
     if not invoices:
         raise HTTPException(status_code=400, detail="invoices must be a non-empty list")
-    if not wait:
+    if not _effective_wait(wait, body.wait):
         ids = []
         for inv in invoices[:5]:
             q = enqueue(
@@ -473,8 +497,21 @@ def fleet_list_runs(
     org: OrgContext = Depends(get_org_context),
     limit: int = 20,
 ):
+    from ai_agents.adk.queue import FleetInFlight, execute
     from ai_agents.adk.runtime import list_runs
 
+    # Browser poll often hits the list, not GET /runs/{id}. Drain QUEUED rows
+    # here so a rewrite/proxy that 404s the by-id path still settles.
+    pending = [row for row in list_runs(db, org.tenant_id, limit=limit) if row.get("status") == "QUEUED"]
+    for row in pending[:10]:
+        try:
+            execute(row["run_id"], db)
+        except FleetInFlight:
+            pass
+        except KeyError:
+            pass
+        except Exception:
+            logging.getLogger("verifleet").exception("list drain failed for %s", row.get("run_id"))
     return {"tenant_id": org.tenant_id, "runs": list_runs(db, org.tenant_id, limit=limit)}
 
 

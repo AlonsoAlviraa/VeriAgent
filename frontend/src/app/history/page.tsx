@@ -2,119 +2,124 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, XCircle, Download, ExternalLink, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
-import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/i18n/locale-provider";
+import type { MessageKey } from "@/lib/i18n";
 
 const FULL_HISTORY = [
-  { id: 1, date: "14 Oct 2023, 10:42", issuer: "Amazon Web Services", logo: "AWS", amount: "45,20 €", status: "FIRMADO", hash: "XJ9K2M..." },
-  { id: 2, date: "12 Oct 2023, 16:15", issuer: "Restaurante El Paso", logo: "EP", amount: "120,50 €", status: "REVISAR", hash: "P8Q2L1..." },
-  { id: 3, date: "10 Oct 2023, 09:30", issuer: "PC Componentes", logo: "PC", amount: "899,00 €", status: "RECHAZADO", hash: "T5R3K9..." },
-  { id: 4, date: "05 Oct 2023, 14:20", issuer: "Telefónica", logo: "TEL", amount: "58,90 €", status: "FIRMADO", hash: "M7V4P2..." },
-  { id: 5, date: "01 Oct 2023, 11:00", issuer: "Iberdrola", logo: "IBE", amount: "142,30 €", status: "FIRMADO", hash: "H2N8L5..." },
-  { id: 6, date: "28 Sep 2023, 09:15", issuer: "Repsol", logo: "REP", amount: "67,40 €", status: "FIRMADO", hash: "W1Q6R8..." },
-  { id: 7, date: "25 Sep 2023, 16:45", issuer: "Endesa", logo: "END", amount: "89,20 €", status: "REVISAR", hash: "U9T5V3..." },
-  { id: 8, date: "20 Sep 2023, 10:30", issuer: "Naturgy", logo: "NAT", amount: "76,80 €", status: "FIRMADO", hash: "K4P1M7..." },
+  { id: 1, date: "14 Oct 2023, 10:42", issuer: "Amazon Web Services", logo: "AWS", amount: "45,20 €", status: "FIRMADO" as const, hash: "XJ9K2M..." },
+  { id: 2, date: "12 Oct 2023, 16:15", issuer: "Restaurante El Paso", logo: "EP", amount: "120,50 €", status: "REVISAR" as const, hash: "P8Q2L1..." },
+  { id: 3, date: "10 Oct 2023, 09:30", issuer: "PC Componentes", logo: "PC", amount: "899,00 €", status: "RECHAZADO" as const, hash: "T5R3K9..." },
+  { id: 4, date: "05 Oct 2023, 14:20", issuer: "Telefónica", logo: "TEL", amount: "58,90 €", status: "FIRMADO" as const, hash: "M7V4P2..." },
+  { id: 5, date: "01 Oct 2023, 11:00", issuer: "Iberdrola", logo: "IBE", amount: "142,30 €", status: "FIRMADO" as const, hash: "H2N8L5..." },
+  { id: 6, date: "28 Sep 2023, 09:15", issuer: "Repsol", logo: "REP", amount: "67,40 €", status: "FIRMADO" as const, hash: "W1Q6R8..." },
+  { id: 7, date: "25 Sep 2023, 16:45", issuer: "Endesa", logo: "END", amount: "89,20 €", status: "REVISAR" as const, hash: "U9T5V3..." },
+  { id: 8, date: "20 Sep 2023, 10:30", issuer: "Naturgy", logo: "NAT", amount: "76,80 €", status: "FIRMADO" as const, hash: "K4P1M7..." },
 ];
 
-const StatusBadge = ({ status }: { status: string }) => {
+const STATUS_KEYS: Record<(typeof FULL_HISTORY)[number]["status"], MessageKey> = {
+  FIRMADO: "history.status.FIRMADO",
+  REVISAR: "history.status.REVISAR",
+  RECHAZADO: "history.status.RECHAZADO",
+};
+
+const StatusBadge = ({ status }: { status: (typeof FULL_HISTORY)[number]["status"] }) => {
+  const { t } = useLocale();
   const styles: Record<string, string> = {
-    FIRMADO: "bg-emerald-400/12 text-emerald-300 ring-1 ring-emerald-400/25",
-    REVISAR: "bg-amber-400/12 text-amber-200 ring-1 ring-amber-400/25",
-    RECHAZADO: "bg-rose-400/12 text-rose-300 ring-1 ring-rose-400/25",
+    FIRMADO: "bg-[#eef8f1] text-[#17663f] border-[#c8e6d3]",
+    REVISAR: "bg-[#fbf3e8] text-[#9a4d09] border-[#f3d5b0]",
+    RECHAZADO: "bg-[#fbefee] text-[#9b2c2c] border-[#f0c7c3]",
   };
 
   return (
-    <span className={cn("inline-flex w-fit items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold", styles[status])}>
-      {status === "FIRMADO" && <CheckCircle2 className="h-3 w-3" />}
-      {status === "REVISAR" && <AlertTriangle className="h-3 w-3" />}
-      {status === "RECHAZADO" && <XCircle className="h-3 w-3" />}
-      {status}
+    <span className={cn("inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", styles[status])}>
+      {t(STATUS_KEYS[status])}
     </span>
   );
 };
 
 export default function HistoryPage() {
+  const { t } = useLocale();
+
   return (
     <AppShell>
-      <main className="relative z-10 mx-auto max-w-6xl space-y-8 px-5 py-10 sm:px-8">
+      <main className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-4 py-8 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="vf-kicker">Product ledger</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Historial</h1>
-            <p className="mt-1 text-sm text-slate-500">Sample Smart Audit rows. Live fleet decisions are on /fleet.</p>
+            <p className="vf-label">{t("history.kicker")}</p>
+            <h1 className="mt-2 text-[28px] font-medium tracking-[-0.03em] text-[#111]">{t("history.title")}</h1>
+            <p className="mt-1 text-sm text-[#6f6e69]">
+              {t("history.subtitle")}
+            </p>
           </div>
+          <Badge variant="outline" className="rounded-full border-[#f3d5b0] bg-[#fbf3e8] text-[#9a4d09]">
+            MOCK
+          </Badge>
         </div>
 
-        <Link
-          href="/fleet"
-          className="vf-card vf-card-hover flex items-center justify-between gap-4 rounded-2xl px-5 py-4"
+        <Button
+          render={<Link href="/fleet" />}
+          nativeButton={false}
+          variant="outline"
+          className="h-auto w-full justify-between rounded-lg border-[#e8e6e3] bg-white px-4 py-4 text-left hover:bg-[#fafaf8]"
         >
-          <div>
-            <p className="text-sm font-semibold text-white">Live SIGN / ESCALATE / BLOCK runs</p>
-            <p className="text-xs text-slate-500">This table is a product mock. The contest console is /fleet.</p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-emerald-300" />
-        </Link>
+          <span>
+            <span className="block text-sm font-medium text-[#111]">{t("history.liveTitle")}</span>
+            <span className="block text-xs font-normal text-[#6f6e69]">
+              {t("history.liveSub")}
+            </span>
+          </span>
+          <ArrowRight data-icon="inline-end" className="text-[#6f6e69]" />
+        </Button>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="vf-card rounded-2xl p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{FULL_HISTORY.length}</p>
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">{t("history.total")}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#111]">{FULL_HISTORY.length}</p>
           </div>
-          <div className="vf-card rounded-2xl p-5 ring-1 ring-emerald-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/80">Firmadas</p>
-            <p className="mt-2 text-3xl font-semibold text-emerald-300">
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">{t("history.signed")}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#17663f]">
               {FULL_HISTORY.filter((h) => h.status === "FIRMADO").length}
             </p>
           </div>
-          <div className="vf-card rounded-2xl p-5 ring-1 ring-amber-400/15">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-200/80">Pendientes</p>
-            <p className="mt-2 text-3xl font-semibold text-amber-200">
+          <div className="vf-card rounded-lg p-4">
+            <p className="vf-label">{t("history.pending")}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums text-[#9a4d09]">
               {FULL_HISTORY.filter((h) => h.status === "REVISAR").length}
             </p>
           </div>
         </div>
 
-        <section className="vf-card overflow-hidden rounded-[2rem]">
+        <section className="vf-card overflow-hidden rounded-lg">
+          <div className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-3">
+            <p className="text-[15px] font-medium text-[#111]">{t("history.sample")}</p>
+            <span className="text-[12px] text-[#6f6e69]">{t("history.mockNote")}</span>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[640px] text-left text-[13px]">
               <thead>
-                <tr className="border-b border-white/6 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-4">Fecha</th>
-                  <th className="px-2 py-4">Emisor</th>
-                  <th className="px-2 py-4 text-right">Importe</th>
-                  <th className="px-2 py-4">Hash</th>
-                  <th className="px-2 py-4">Estado</th>
-                  <th className="px-6 py-4" />
+                <tr className="border-b border-[#e8e6e3] text-[11px] font-medium tracking-wide text-[#6f6e69] uppercase">
+                  <th className="px-4 py-2.5 font-medium">{t("history.date")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("history.issuer")}</th>
+                  <th className="px-4 py-2.5 text-right font-medium">{t("history.amount")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("history.hash")}</th>
+                  <th className="px-4 py-2.5 font-medium">{t("history.status")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/6">
+              <tbody>
                 {FULL_HISTORY.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-white/3">
-                    <td className="px-6 py-4 text-sm text-slate-500">{item.date}</td>
-                    <td className="px-2 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/6 text-[10px] font-black text-white">
-                          {item.logo}
-                        </div>
-                        <span className="text-sm font-semibold text-slate-200">{item.issuer}</span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-4 text-right font-mono text-sm font-semibold text-white">{item.amount}</td>
-                    <td className="px-2 py-4 font-mono text-xs text-slate-500">{item.hash}</td>
-                    <td className="px-2 py-4">
+                  <tr key={item.id} className="border-b border-[#e8e6e3] last:border-0">
+                    <td className="px-4 py-3 text-[#6f6e69]">{item.date}</td>
+                    <td className="px-4 py-3 font-medium text-[#111]">{item.issuer}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-[#111]">{item.amount}</td>
+                    <td className="px-4 py-3 font-mono text-[12px] text-[#6f6e69]">{item.hash}</td>
+                    <td className="px-4 py-3">
                       <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1 text-slate-500">
-                        <span className="rounded-lg p-2">
-                          <ExternalLink className="h-4 w-4" />
-                        </span>
-                        <span className="rounded-lg p-2">
-                          <Download className="h-4 w-4" />
-                        </span>
-                      </div>
                     </td>
                   </tr>
                 ))}

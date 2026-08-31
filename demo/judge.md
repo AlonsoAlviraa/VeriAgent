@@ -5,11 +5,13 @@
 ```bash
 set DATABASE_URL=sqlite:///verifleet.db
 set VERIAGENT_AUTO_INIT_DB=1
-python -m uvicorn core_engine.main:app --reload --port 8000
+python -m uvicorn core_engine.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend && npm run dev
 ```
 
-Open http://localhost:3000/fleet  
+One uvicorn only, bind **127.0.0.1**. Restart it after pulling backend queue changes. Restart Next after pulling proxy/rewrite changes (`next.config` must not rewrite `/api/v1`).
+
+Open http://127.0.0.1:3000/fleet  
 Headers the UI sets: `X-Tenant-Id: enterprise-demo`, `X-User-Id: judge`, `X-Roles: issuer`
 
 1. Valid invoice → SIGNED (hash from `core_engine`).
